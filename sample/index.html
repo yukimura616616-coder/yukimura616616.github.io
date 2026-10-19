@@ -1,0 +1,1680 @@
+FG<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心理学 院試 英単語アプリ</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --gray-text: #64748b;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 20px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .category-badge {
+            font-size: 0.8rem;
+            background: #e0e7ff;
+            color: var(--primary-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .english-word {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .answer-area {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            width: 100%;
+            display: none;
+            text-align: left;
+        }
+        .answer-area.show {
+            display: block;
+        }
+        .japanese {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        .related {
+            font-size: 0.95rem;
+            color: var(--gray-text);
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #e2e8f0; color: #334155; }
+        .btn-secondary:hover { background-color: #cbd5e1; }
+        
+        .menu-box, .add-box {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 20px;
+        }
+        .menu-box select, .add-box input, .add-box select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .add-box label {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--gray-text);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧠 心理学 院試英単語アプリ</h1>
+
+    <!-- モード選択・分野選択 -->
+    <div class="menu-box">
+    <label>🔎 単語検索</label>
+    <input
+        type="text"
+        id="searchWord"
+        placeholder="例: attachment">
+    <button
+        class="btn-primary"
+        onclick="searchWord()">
+        検索
+    </button>
+</div>
+<div class="menu-box">
+    <label>出題モード・分野</label>
+    <select id="modeSelect" onchange="changeMode()">
+        <option value="random">🔀 すべてからランダム</option>
+    </select>
+</div>
+    <!-- 単語カード -->
+    <div class="card" id="cardContainer">
+        <div class="category-badge" id="cardCategory">分野</div>
+        <div class="english-word" id="cardEnglish">読み込み中...</div>
+        <div class="answer-area" id="answerArea">
+            <div class="japanese" id="cardJapanese">日本語訳</div>
+            <div class="related" id="cardRelated">関連用語・補足説明</div>
+        </div>
+    </div>
+    <!-- アクションボタン -->
+<div class="controls">
+   <button class="btn-secondary" onclick="toggleMode()">
+        英⇔日 切替
+    </button>
+    <button class="btn-secondary"
+            id="revealBtn"
+            onclick="revealAnswer()">
+        答えを見る
+    </button>
+    <button class="btn-primary"
+            id="nextBtn"
+            onclick="nextCard()"
+            style="display:none;">
+        次の単語 ➔
+    </button>
+</div>
+    <!-- 新規単語追加フォーム -->
+    <div class="add-box">
+        <label>➕ 新しい単語を追加</label>
+        <input type="text" id="newEnglish" placeholder="英単語 (例: perception)">
+        <input type="text" id="newJapanese" placeholder="日本語訳 (例: 知覚)">
+        <label>分野</label>
+        <select id="newCategory">
+            <!-- JavaScriptで自動生成されます -->
+        </select>
+        <input type="text" id="newRelated" placeholder="関連用語・解説">
+        <button class="btn-primary" onclick="addNewWord()">単語を追加する</button>
+    </div>
+</div>
+<script>
+    // 全単語データリスト
+    const defaultWords = [
+        // ==================== 1. 臨床心理学・精神医学 ====================
+        { english: "treatment", japanese: "治療、処置", category: "1. 臨床心理学・精神医学", related: "関連: treat（治療する）、psychological assessment（心理査定）" },
+        { english: "therapy", japanese: "セラピー、治療", category: "1. 臨床心理学・精神医学", related: "関連: therapist（療法士、セラピスト）" },
+        { english: "mental", japanese: "心理的な、内的な、メンタルの", category: "1. 臨床心理学・精神医学", related: "関連: mental health（メンタルヘルス）、mental process（心理過程）" },
+        { english: "anxiety", japanese: "不安", category: "1. 臨床心理学・精神医学", related: "関連: anxious（不安な）、anxiety disorder（不安障害）" },
+        { english: "patient", japanese: "患者", category: "1. 臨床心理学・精神医学", related: "関連: client（クライエント）、therapist-patient relationship" },
+        { english: "case", japanese: "事例、ケース、場合", category: "1. 臨床心理学・精神医学", related: "関連: case study（事例研究）、developmental disorder（発達障害）" },
+        { english: "psychotherapy", japanese: "心理療法", category: "1. 臨床心理学・精神医学", related: "関連: rapport（ラポール）、intervention（介入）" },
+        { english: "clinical", japanese: "臨床的な、臨床の", category: "1. 臨床心理学・精神医学", related: "関連: clinical psychologist（臨床心理士）、clinical psychology" },
+        { english: "functioning", japanese: "機能", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、psychological functioning" },
+        { english: "self", japanese: "自己", category: "1. 臨床心理学・精神医学", related: "関連: sense of self（自己意識）、incongruence（不一致）" },
+        { english: "client", japanese: "クライエント", category: "1. 臨床心理学・精神医学", related: "関連: Rogers（ロジャーズ）、counselor（カウンセラー）、congruence（一致）" },
+        { english: "depression", japanese: "抑うつ、うつ病", category: "1. 臨床心理学・精神医学", related: "関連: depressive（抑うつの）、social support（ソーシャルサポート）" },
+        { english: "loss", japanese: "喪失、失うこと", category: "1. 臨床心理学・精神医学", related: "関連: lose（失う）、grief（悲嘆）" },
+        { english: "unconscious", japanese: "無意識、無意識の", category: "1. 臨床心理学・精神医学", related: "関連: conscious（意識の）、Freud（フロイト）、repression（抑圧）" },
+        { english: "object", japanese: "対象、もの", category: "1. 臨床心理学・精神医学", related: "関連: object relation（対象関係）、attachment（愛着）" },
+        { english: "care", japanese: "世話、保護、ケア", category: "1. 臨床心理学・精神医学", related: "関連: orphanages（孤児院）、caregiver（養育者）" },
+        { english: "grief", japanese: "悲嘆", category: "1. 臨床心理学・精神医学", related: "関連: Kübler-Ross（キューブラー＝ロス：死の5段階モデル）" },
+        { english: "abuse", japanese: "虐待", category: "1. 臨床心理学・精神医学", related: "関連: child abuse（児童虐待）、neglect（ネグレクト）" },
+        { english: "suicide", japanese: "自殺", category: "1. 臨床心理学・精神医学", related: "関連: attempt suicide（自殺を図る）、borderline personality disorder" },
+        { english: "well-being", japanese: "幸福感、ウェルビーイング", category: "1. 臨床心理学・精神医学", related: "関連: subjective well-being（主観的ウェルビーイング）、extroversion（外向性）" },
+        { english: "conscious", japanese: "意識の", category: "1. 臨床心理学・精神医学", related: "関連: consciousness（意識）、unconscious（無意識）" },
+        { english: "normal", japanese: "正常、標準", category: "1. 臨床心理学・精神医学", related: "関連: abnormal（異常な）、norm（規範）" },
+        { english: "ego", japanese: "自我", category: "1. 臨床心理学・精神医学", related: "関連: id（イド）、superego（超自我）、psychoanalysis（精神分析）" },
+        { english: "mental health", japanese: "メンタルヘルス", category: "1. 臨床心理学・精神医学", related: "関連: psychological well-being（心理的ウェルビーイング）" },
+        { english: "symptom", japanese: "症状、徴候", category: "1. 臨床心理学・精神医学", related: "関連: symptomatic（症状のある）、negative symptoms（陰性症状）" },
+        { english: "coping", japanese: "対処法、コーピング", category: "1. 臨床心理学・精神医学", related: "関連: emotion-focused coping（感情焦点型コーピング）" },
+        { english: "maltreatment", japanese: "虐待", category: "1. 臨床心理学・精神医学", related: "関連: child maltreatment（要保護児童・虐待）" },
+        { english: "cope", japanese: "対処する", category: "1. 臨床心理学・精神医学", related: "関連: cope with stress（ストレスに対処する）" },
+        { english: "desire", japanese: "願望", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、dream analysis（夢分析）" },
+        { english: "schizophrenia", japanese: "統合失調症", category: "1. 臨床心理学・精神医学", related: "関連: positive/negative symptoms（陽性・陰性症状）" },
+        { english: "behavior therapy", japanese: "行動療法", category: "1. 臨床心理学・精神医学", related: "関連: CBT（認知行動療法）、behavior modification（行動変容）" },
+        { english: "traumatic", japanese: "（心的）外傷の、トラウマの", category: "1. 臨床心理学・精神医学", related: "関連: PTSD（心的外傷後ストレス障害）、trauma（トラウマ）" },
+        { english: "transference", japanese: "転移", category: "1. 臨床心理学・精神医学", related: "関連: countertransference（逆転移）、psychoanalysis（精神分析）" },
+        { english: "psychopathology", japanese: "精神病理学、精神病理", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanisms（防衛機制）" },
+        { english: "anxiety disorder", japanese: "不安障害", category: "1. 臨床心理学・精神医学", related: "関連: GAD（全般性不安障害）、panic disorder（パニック障害）" },
+        { english: "boundary", japanese: "境界", category: "1. 臨床心理学・精神医学", related: "関連: family boundaries（家族の境界線）、rigid/enmeshed" },
+        { english: "diagnosis", japanese: "診断", category: "1. 臨床心理学・精神医学", related: "関連: diagnose（診断する）、DSM-5、ICD-11" },
+        { english: "prevention", japanese: "予防", category: "1. 臨床心理学・精神医学", related: "関連: prevent（予防する）、prevention program（予防プログラム）" },
+        { english: "substance abuse", japanese: "薬物乱用", category: "1. 臨床心理学・精神医学", related: "関連: addiction（依存症）、stimulants（刺激薬・覚醒剤）" },
+        { english: "bereaved", japanese: "先立たれた、後に残された", category: "1. 臨床心理学・精神医学", related: "関連: bereavement（死別、遺族の悲嘆）" },
+        { english: "project", japanese: "投影する、投射する", category: "1. 臨床心理学・精神医学", related: "関連: projective test（投影法検査）" },
+        { english: "collaboration", japanese: "コラボレーション、協力", category: "1. 臨床心理学・精神医学", related: "関連: multi-agency collaboration（多機関連携）" },
+        { english: "crisis", japanese: "危機", category: "1. 臨床心理学・精神医学", related: "関連: crisis intervention（危機介入）、foreclosure status" },
+        { english: "mourning", japanese: "喪", category: "1. 臨床心理学・精神医学", related: "関連: mourn（悼む）、grief work（グリーフワーク）" },
+        { english: "session", japanese: "セッション", category: "1. 臨床心理学・精神医学", related: "関連: counseling session（カウンセリング面接・回）" },
+        { english: "severity", japanese: "重症度、（症状の）重さ", category: "1. 臨床心理学・精神医学", related: "関連: severe（重度の）、neurotic（神経症の）" },
+        { english: "spiritual", japanese: "精神の、霊的な", category: "1. 臨床心理学・精神医学", related: "関連: spirituality（スピリチュアリティ）" },
+        { english: "chronic", japanese: "慢性的な", category: "1. 臨床心理学・精神医学", related: "関連: acute（急性の）、chronic stress（慢性ストレス）" },
+        { english: "psyche", japanese: "こころ、魂", category: "1. 臨床心理学・精神医学", related: "関連: psychoanalysis（精神分析）、depth psychology（深層心理学）" },
+        { english: "autism", japanese: "自閉症", category: "1. 臨床心理学・精神医学", related: "関連: ASD（自閉スペクトラム症）、brain malfunction" },
+        { english: "defense", japanese: "防衛", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、ego defense" },
+        { english: "psychic", japanese: "心的な、内的な、精神の", category: "1. 臨床心理学・精神医学", related: "関連: psychic energy（性的/心的エネルギー、リビドー）" },
+        { english: "psychodynamic", japanese: "精神力動の", category: "1. 臨床心理学・精神医学", related: "関連: psychodynamic therapy（精神力動的療法）" },
+        { english: "resistance", japanese: "抵抗", category: "1. 臨床心理学・精神医学", related: "関連: resist（抵抗する）、unconscious resistance" },
+        { english: "rumination", japanese: "反芻", category: "1. 臨床心理学・精神医学", related: "関連: ruminate（思い悩む）、depressive rumination" },
+        { english: "separation", japanese: "分離", category: "1. 臨床心理学・精神医学", related: "関連: Ainsworth（エインスワース）、separation anxiety（分離不安）" },
+        { english: "depressed mood", japanese: "抑うつ気分", category: "1. 臨床心理学・精神医学", related: "関連: serotonin（セロトニン）、depression" },
+        { english: "dynamics", japanese: "力動、原動力", category: "1. 臨床心理学・精神医学", related: "関連: dynamic（力動的な）、client-therapist relationship" },
+        { english: "identification", japanese: "同一視、同一化", category: "1. 臨床心理学・精神医学", related: "関連: identify（同一視する）、projection（投影）" },
+        { english: "intrapsychic", japanese: "精神（内）の", category: "1. 臨床心理学・精神医学", related: "関連: intrapsychic cues（精神内手がかり）" },
+        { english: "listening", japanese: "聞くこと、傾聴", category: "1. 臨床心理学・精神医学", related: "関連: active listening（積極的傾聴）" },
+        { english: "victim", japanese: "犠牲者、被害者", category: "1. 臨床心理学・精神医学", related: "関連: victimize（犠牲にする）、sexual abuse（性的虐待）" },
+        { english: "withdrawal", japanese: "引きこもり", category: "1. 臨床心理学・精神医学", related: "関連: social withdrawal（社会的引きこもり）" },
+        { english: "clinical psychology", japanese: "臨床心理学", category: "1. 臨床心理学・精神医学", related: "関連: Adler（アドラー）、organ inferiority（臓器劣等性）" },
+        { english: "compensation", japanese: "補償", category: "1. 臨床心理学・精神医学", related: "関連: Adler（アドラー）、compensate（補償する）" },
+        { english: "healing", japanese: "癒し、回復", category: "1. 臨床心理学・精神医学", related: "関連: heal（癒す）、mental atmosphere" },
+        { english: "narcissistic", japanese: "自己愛的な", category: "1. 臨床心理学・精神医学", related: "関連: narcissism（ナルシシズム）、self-esteem（自尊感情）" },
+        { english: "resilience", japanese: "レジリエンス", category: "1. 臨床心理学・精神医学", related: "関連: anti-bullying programs（いじめ防止プログラム）" },
+        { english: "bullying", japanese: "いじめ", category: "1. 臨床心理学・精神医学", related: "関連: psychological abuse（心理的虐待）、psychiatrist" },
+        { english: "consultation", japanese: "コンサルテーション", category: "1. 臨床心理学・精神医学", related: "関連: consultee（被コンサルティ）、consultant" },
+        { english: "disturbance", japanese: "障害、問題", category: "1. 臨床心理学・精神医学", related: "関連: psychological disturbance、maladaptive behavior" },
+        { english: "focusing", japanese: "フォーカシング", category: "1. 臨床心理学・精神医学", related: "関連: Gendlin（ジェンドリン）、felt sense（フェルトセンス）" },
+        { english: "mental illness", japanese: "精神疾患", category: "1. 臨床心理学・精神医学", related: "関連: comorbid（併存する）、psychiatric disorder" },
+        { english: "panic disorder", japanese: "パニック障害", category: "1. 臨床心理学・精神医学", related: "関連: phobia（恐怖症）、agoraphobia（広場恐怖）" },
+        { english: "posttraumatic", japanese: "（心的）外傷後の", category: "1. 臨床心理学・精神医学", related: "関連: posttraumatic growth（外傷後成長）" },
+        { english: "relaxation", japanese: "リラクゼーション", category: "1. 臨床心理学・精神医学", related: "関連: reduce anxiety（不安を軽減する）" },
+        { english: "self-awareness", japanese: "自己意識", category: "1. 臨床心理学・精神医学", related: "関連: mirror self-recognition（鏡像自己認知テスト）" },
+        { english: "social support", japanese: "ソーシャルサポート", category: "1. 臨床心理学・精神医学", related: "関連: dysfunctional families（機能不全家族）" },
+        { english: "stress management", japanese: "ストレスマネジメント", category: "1. 臨床心理学・精神医学", related: "関連: intervention（介入）、scientific evaluation" },
+        { english: "alliance", japanese: "同盟", category: "1. 臨床心理学・精神医学", related: "関連: therapeutic alliance（治療同盟）" },
+        { english: "anorexia nervosa", japanese: "神経性無食欲症", category: "1. 臨床心理学・精神医学", related: "関連: cognitive behavioral therapy、family therapy" },
+        { english: "castration", japanese: "去勢", category: "1. 臨床心理学・精神医学", related: "関連: castration anxiety（去勢不安）" },
+        { english: "cognitive therapy", japanese: "認知療法", category: "1. 臨床心理学・精神医学", related: "関連: control thoughts（思考をコントロールする）" },
+        { english: "collective unconscious", japanese: "集合的無意識", category: "1. 臨床心理学・精神医学", related: "関連: Jung（ユング）、personal unconscious（個人的無意識）" },
+        { english: "countertransference", japanese: "逆転移", category: "1. 臨床心理学・精神医学", related: "関連: transference（転移）、Freud（フロイト）" },
+        { english: "family functioning", japanese: "家族機能", category: "1. 臨床心理学・精神医学", related: "関連: psychosomatic patients（心身症患者）" },
+        { english: "irrational", japanese: "不合理な", category: "1. 臨床心理学・精神医学", related: "関連: anxiety disorders（不安障害）" },
+        { english: "neglect", japanese: "ネグレクト、無視", category: "1. 臨床心理学・精神医学", related: "関連: child development（子どもの発達）" },
+        { english: "neurosis", japanese: "神経症", category: "1. 臨床心理学・精神医学", related: "関連: DSM、mental illness（精神疾患）" },
+        { english: "play therapy", japanese: "遊戯療法", category: "1. 臨床心理学・精神医学", related: "関連: quantitative research（量的研究）、defense mechanism" },
+        { english: "regression", japanese: "退行", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、creative process" },
+        { english: "savant syndrome", japanese: "サヴァン症候群", category: "1. 臨床心理学・精神医学", related: "関連: autism（自閉症）" },
+        { english: "separation-individuation", japanese: "分離個体化", category: "1. 臨床心理学・精神医学", related: "関連: Mahler（マーラー）、infant development（乳児の発達）" },
+        { english: "supervision", japanese: "スーパービジョン", category: "1. 臨床心理学・精神医学", related: "関連: supervisor（指導者）、supervisee（被指導者）" },
+        { english: "addiction", japanese: "中毒", category: "1. 臨床心理学・精神医学", related: "関連: physical dependence（身体的依存）" },
+        { english: "alcoholism", japanese: "アルコール依存症", category: "1. 臨床心理学・精神医学", related: "関連: Olson's Circumplex Model（オルソンの円環モデル）" },
+        { english: "cohesion", japanese: "凝集性", category: "1. 臨床心理学・精神医学", related: "関連: family functioning（家族機能）" },
+        { english: "compulsive", japanese: "強迫的な", category: "1. 臨床心理学・精神医学", related: "関連: stressful emotions（ストレスフルな感情）" },
+        { english: "cure", japanese: "癒す、治療する", category: "1. 臨床心理学・精神医学", related: "関連: cure sickness（病気を治す）" },
+        { english: "dialogue", japanese: "対話", category: "1. 臨床心理学・精神医学", related: "関連: imaginary self（想像上の自己）" },
+        { english: "holding", japanese: "ホールディング", category: "1. 臨床心理学・精神医学", related: "関連: Winnicott（ウィニコット）、holding environment" },
+        { english: "individuation", japanese: "個性化", category: "1. 臨床心理学・精神医学", related: "関連: Jung（ユング）、integrate experience（統合する）" },
+        { english: "intersubjective", japanese: "間主観的な", category: "1. 臨床心理学・精神医学", related: "関連: Sullivan（サリヴァン）、interpersonal theory（対人関係理論）" },
+        { english: "life event", japanese: "ライフイベント", category: "1. 臨床心理学・精神医学", related: "関連: Holmes and Rahe scale（社会適応評価尺度）" },
+        { english: "medication", japanese: "薬物治療", category: "1. 臨床心理学・精神医学", related: "関連: psychotherapy（心理療法）、anxiety disorders" },
+        { english: "mythology", japanese: "神話、神話学", category: "1. 臨床心理学・精神医学", related: "関連: unconscious（無意識）、fairy tales（おとぎ話）" },
+        { english: "preoccupation", japanese: "没頭、夢中", category: "1. 臨床心理学・精神医学", related: "関連: Winnicott（ウィニコット）、primary maternal preoccupation" },
+        { english: "psychosis", japanese: "精神病", category: "1. 臨床心理学・精神医学", related: "関連: severe disturbance（重篤な障害）" },
+        { english: "relief", japanese: "軽減、安堵", category: "1. 臨床心理学・精神医学", related: "関連: relief from distress（苦痛からの解放）" },
+        { english: "school counseling", japanese: "スクールカウンセリング", category: "1. 臨床心理学・精神医学", related: "関連: solution-focused counseling（解決志向カウンセリング）" },
+        { english: "school refusal", japanese: "登校拒否、不登校", category: "1. 臨床心理学・精神医学", related: "関連: questionnaire survey（質問紙調査）" },
+        { english: "self-control", japanese: "セルフコントロール", category: "1. 臨床心理学・精神医学", related: "関連: procrastinate（先延ばしする）" },
+        { english: "self-understanding", japanese: "自己理解", category: "1. 臨床心理学・精神医学", related: "関連: future behavior（将来の行動）" },
+        { english: "substitution", japanese: "代償、代替", category: "1. 臨床心理学・精神医学", related: "関連: symptom substitution（症状代償）" },
+        { english: "superego", japanese: "超自我", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、id（イド）、ego（自我）" },
+        { english: "empathic understanding", japanese: "共感的理解", category: "1. 臨床心理学・精神医学", related: "関連: Rogers（ロジャーズ）、unconditional positive regard（無条件の肯定的配慮）" },
+        { english: "etiology", japanese: "病因、病因論", category: "1. 臨床心理学・精神医学", related: "関連: borderline personality disorder（境界性パーソナリティ障害）" },
+        { english: "holistic", japanese: "ホリスティックな、全体の", category: "1. 臨床心理学・精神医学", related: "関連: holistic viewpoint（全体論的視点）、Anna O." },
+        { english: "hysterical", japanese: "ヒステリーの", category: "1. 臨床心理学・精神医学", related: "関連: hysterical symptoms（ヒステリー症状）" },
+        { english: "informed consent", japanese: "インフォームドコンセント", category: "1. 臨床心理学・精神医学", related: "関連: ethical rules（倫理規則）" },
+        { english: "learning difficulty", japanese: "学習障害", category: "1. 臨床心理学・精神医学", related: "関連: hallucinations（幻覚）、delusions（妄想）" },
+        { english: "major depression", japanese: "大うつ病", category: "1. 臨床心理学・精神医学", related: "関連: psychotic symptoms（精神病症状）" },
+        { english: "maladjustment", japanese: "不適応", category: "1. 臨床心理学・精神医学", related: "関連: psychotherapy（心理療法）、pharmacotherapy（薬物療法）" },
+        { english: "mentality", japanese: "精神性、心性", category: "1. 臨床心理学・精神医学", related: "関連: human mentality（人間の心性）" },
+        { english: "outpatient", japanese: "外来患者", category: "1. 臨床心理学・精神医学", related: "関連: inpatient（入院患者）" },
+        { english: "self-worth", japanese: "自尊心、自尊価値", category: "1. 臨床心理学・精神医学", related: "関連: deficient feelings（不十分な感情）" },
+        { english: "substance dependence", japanese: "薬物依存", category: "1. 臨床心理学・精神医学", related: "関連: ADHD、longitudinal study（縦断研究）" },
+        { english: "symptomatology", japanese: "症候学、症状", category: "1. 臨床心理学・精神医学", related: "関連: ADHD symptoms in adulthood（成人期のADHD症状）" },
+        { english: "apparatus", japanese: "装置、道具", category: "1. 臨床心理学・精神医学", related: "関連: psychic apparatus（精神機構）、unconscious" },
+        { english: "cognitive behavioral therapy", japanese: "認知行動療法", category: "1. 臨床心理学・精神医学", related: "関連: evidence-based approach（エビデンスベースのアプローチ）" },
+        { english: "comorbidity", japanese: "同時罹患、併発", category: "1. 臨床心理学・精神医学", related: "関連: comorbid（併存する）、anxiety disorders" },
+        { english: "congruence", japanese: "一致、自己一致", category: "1. 臨床心理学・精神医学", related: "関連: Rogers（ロジャーズ）、incongruence（不一致）" },
+        { english: "depressive disorder", japanese: "うつ病、抑うつ障害", category: "1. 臨床心理学・精神医学", related: "関連: depression（抑うつ）、dementia（認知症）" },
+        { english: "disorientation", japanese: "失見当", category: "1. 臨床心理学・精神医学", related: "関連: disorientation in space and time（見当識障害）" },
+        { english: "dysphoric", japanese: "不快な、不快性の", category: "1. 臨床心理学・精神医学", related: "関連: dysphoric mood（不快気分）" },
+        { english: "fixation", japanese: "固着", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、oral stage（口腔期）" },
+        { english: "genuineness", japanese: "純粋性", category: "1. 臨床心理学・精神医学", related: "関連: therapist's feelings（セラピストの感情）" },
+        { english: "gestalt therapy", japanese: "ゲシュタルト療法", category: "1. 臨床心理学・精神医学", related: "関連: here and now（今、ここ）" },
+        { english: "hospitalization", japanese: "入院", category: "1. 臨床心理学・精神医学", related: "関連: inpatient（入院患者）、outpatient（外来患者）" },
+        { english: "humanistic psychology", japanese: "人間性心理学", category: "1. 臨床心理学・精神医学", related: "関連: Maslow（マズロー）、third force（第三勢力）" },
+        { english: "humiliation", japanese: "屈辱を与える", category: "1. 臨床心理学・精神医学", related: "関連: shame（恥）、depression（抑うつ）" },
+        { english: "binge eating", japanese: "むちゃ食い", category: "1. 臨床心理学・精神医学", related: "関連: bulimia nervosa（神経性大食症）、purge（排泄）" },
+        { english: "bipolar disorder", japanese: "双極性障害", category: "1. 臨床心理学・精神医学", related: "関連: mood swings（気分変調）、prevalence（有病率）" },
+        { english: "borderline personality disorder", japanese: "境界性パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: emotional instability（情緒不安定）" },
+        { english: "bulimia nervosa", japanese: "神経性大食症、過食症", category: "1. 臨床心理学・精神医学", related: "関連: binge eating（むちゃ食い）、self-induced vomiting" },
+        { english: "burnout syndrome", japanese: "燃え尽き症候群", category: "1. 臨床心理学・精神医学", related: "関連: emotional exhaustion（情動的消耗）" },
+        { english: "catharsis", japanese: "カタルシス、浄化", category: "1. 臨床心理学・精神医学", related: "関連: release of emotions（感情の発散）" },
+        { english: "client centered therapy", japanese: "クライエント中心療法", category: "1. 臨床心理学・精神医学", related: "関連: self-actualization（自己実現）" },
+        { english: "co-dependency", japanese: "共依存", category: "1. 臨床心理学・精神医学", related: "関連: fear of being rejected（見捨てられ不安）" },
+        { english: "collage therapy", japanese: "コラージュ療法", category: "1. 臨床心理学・精神医学", related: "関連: art therapy（芸術療法）、psychotherapy" },
+        { english: "constellation", japanese: "布置、星座", category: "1. 臨床心理学・精神医学", related: "関連: Jung（ユング）、archetypes（原型）" },
+        { english: "conversion disorder", japanese: "転換性障害", category: "1. 臨床心理学・精神医学", related: "関連: somatoform disorders（身体表現性障害）、hysteria" },
+        { english: "crisis intervention", japanese: "危機介入", category: "1. 臨床心理学・精神医学", related: "関連: immediate crisis（切迫した危機）" },
+        { english: "daily hassles", japanese: "デイリーハッスルズ", category: "1. 臨床心理学・精神医学", related: "関連: chronic headache（慢性頭痛）、minor stressors" },
+        { english: "agoraphobia", japanese: "広場恐怖", category: "1. 臨床心理学・精神医学", related: "関連: panic disorder（パニック障害）、fear of public places" },
+        { english: "alexithymia", japanese: "アレキシサイミア（失感情徴候群）", category: "1. 臨床心理学・精神医学", related: "関連: psychosomatic disease（心身症）" },
+        { english: "ambivalence", japanese: "アンビバレンス、両価性", category: "1. 臨床心理学・精神医学", related: "関連: coexistence of opposite feelings（相反する感情の共存）" },
+        { english: "amplification", japanese: "拡充（法）", category: "1. 臨床心理学・精神医学", related: "関連: Jungian technique（ユング派の手法）、dreams（夢）" },
+        { english: "antidepressant", japanese: "抗うつ剤", category: "1. 臨床心理学・精神医学", related: "関連: mood swings（気分の変動）、depression（うつ病）" },
+        { english: "antisocial personality disorder", japanese: "反社会性パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: personality disorders（パーソナリティ障害）" },
+        { english: "applied behavioral analysis", japanese: "応用行動分析（ABA）", category: "1. 臨床心理学・精神医学", related: "関連: autism spectrum disorder（自閉スペクトラム症）" },
+        { english: "archetype", japanese: "原型、アルケタイプ", category: "1. 臨床心理学・精神医学", related: "関連: Jung（ユング）、collective unconscious（集合的無意識）" },
+        { english: "Asperger syndrome", japanese: "アスペルガー症候群", category: "1. 臨床心理学・精神医学", related: "関連: autism spectrum disorder（自閉スペクトラム症）" },
+        { english: "autism spectrum", japanese: "自閉スペクトラム", category: "1. 臨床心理学・精神医学", related: "関連: neurodevelopmental disorders（神経発達症群）" },
+        { english: "autogenic training", japanese: "自律訓練法", category: "1. 臨床心理学・精神医学", related: "関連: Schultz（シュルツ）、relaxation technique（リラクゼーション法）" },
+        { english: "automatic thought", japanese: "自動思考", category: "1. 臨床心理学・精神医学", related: "関連: Beck（ベック）、cognitive therapy（認知療法）" },
+        { english: "avoidant personality disorder", japanese: "回避性パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: social anxiety（社会不安）" },
+        { english: "rational-emotive therapy", japanese: "論理療法、論理情緒行動療法", category: "1. 臨床心理学・精神医学", related: "関連: Ellis（エリス）、CBT（認知行動療法）" },
+        { english: "self-defeating", japanese: "自滅的な", category: "1. 臨床心理学・精神医学", related: "関連: self-defeating patterns（自滅的パターン）" },
+        { english: "self-regulation", japanese: "自己調整", category: "1. 臨床心理学・精神医学", related: "関連: emotional regulation（感情調整）" },
+        { english: "self-representation", japanese: "自己表象", category: "1. 臨床心理学・精神医学", related: "関連: object relations theory（対象関係論）" },
+        { english: "shy", japanese: "シャイな、内気な", category: "1. 臨床心理学・精神医学", related: "関連: shyness（内気）、social withdrawal" },
+        { english: "social withdrawal", japanese: "社会的引きこもり", category: "1. 臨床心理学・精神医学", related: "関連: operant conditioning（オペラント条件づけ）" },
+        { english: "sympathy", japanese: "同情", category: "1. 臨床心理学・精神医学", related: "関連: empathy（共感）、heightened awareness" },
+        { english: "thinness", japanese: "やせ", category: "1. 臨床心理学・精神医学", related: "関連: eating disorders（摂食障害）、sociocultural pressure" },
+        { english: "unipolar", japanese: "単極性の、単極型", category: "1. 臨床心理学・精神医学", related: "関連: unipolar depression（単極性うつ病）" },
+        { english: "urge", japanese: "衝動", category: "1. 臨床心理学・精神医学", related: "関連: borderline personality disorder、wash one's hands" },
+        { english: "abandonment depression", japanese: "見捨てられ抑うつ", category: "1. 臨床心理学・精神医学", related: "関連: borderline personality disorder（境界性パーソナリティ障害）" },
+        { english: "acting out", japanese: "行動化、アクティングアウト", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）" },
+        { english: "acute stress disorder", japanese: "急性ストレス障害", category: "1. 臨床心理学・精神医学", related: "関連: psychological debriefing（心理的デブリーフィング）" },
+        { english: "impulse", japanese: "衝動", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、id impulses（イドの衝動）" },
+        { english: "infantile autism", japanese: "早期幼児自閉症", category: "1. 臨床心理学・精神医学", related: "関連: Kanner（カナー）、autism spectrum disorder" },
+        { english: "inpatient", japanese: "入院患者", category: "1. 臨床心理学・精神医学", related: "関連: outpatient（外来患者）" },
+        { english: "introjection", japanese: "取り入れ、内面化", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、parents" },
+        { english: "libidinal", japanese: "リビドーの", category: "1. 臨床心理学・精神医学", related: "関連: libidinal drives（リビドー的欲動）" },
+        { english: "mindfulness", japanese: "マインドフルネス", category: "1. 臨床心理学・精神医学", related: "関連: stress management（ストレスマネジメント）" },
+        { english: "paranoia", japanese: "妄想、パラノイア", category: "1. 臨床心理学・精神医学", related: "関連: depression（抑うつ）、delusion（妄想）" },
+        { english: "person-centered approach", japanese: "パーソン・センタード・アプローチ", category: "1. 臨床心理学・精神医学", related: "関連: Rogers（ロジャーズ）、client-centered therapy" },
+        { english: "personality disorder", japanese: "パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: DSM-5、maladaptive patterns" },
+        { english: "physical abuse", japanese: "身体的虐待", category: "1. 臨床心理学・精神医学", related: "関連: child maltreatment（児童虐待）" },
+        { english: "projection", japanese: "投影、投射", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、Bowlby（ボウルビィ）" },
+        { english: "psychoanalyst", japanese: "精神分析家", category: "1. 臨床心理学・精神医学", related: "関連: psychoanalysis（精神分析）、Freud（フロイト）" },
+        { english: "psychosomatic", japanese: "心身の、心身症の", category: "1. 臨床心理学・精神医学", related: "関連: psychosomatic disorder（心身症）" },
+        { english: "mutism", japanese: "かん黙", category: "1. 臨床心理学・精神医学", related: "関連: selective mutism（選択性かん黙）" },
+        { english: "narcissistic personality disorder", japanese: "自己愛性パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: grandiose（誇大的）、self-esteem（自尊感情）" },
+        { english: "narcolepsy", japanese: "ナルコレプシー", category: "1. 臨床心理学・精神医学", related: "関連: REM sleep（レム睡眠）、daytime sleepiness" },
+        { english: "object relations theory", japanese: "対象関係論", category: "1. 臨床心理学・精神医学", related: "関連: Klein（クライン）、mother-infant relationship" },
+        { english: "Oedipus complex", japanese: "エディプスコンプレックス", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、superego（超自我）" },
+        { english: "overdiagnose", japanese: "過剰診断する", category: "1. 臨床心理学・精神医学", related: "関連: ADHD、cultural bias" },
+        { english: "panic attack", japanese: "パニック発作", category: "1. 臨床心理学・精神医学", related: "関連: panic disorder（パニック障害）、anxiety" },
+        { english: "paranoid personality disorder", japanese: "妄想性パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: critical of others（他者に批判的）" },
+        { english: "paranoid-schizoid position", japanese: "妄想-分裂ポジション", category: "1. 臨床心理学・精神医学", related: "関連: Klein（クライン）、inner and outer objects" },
+        { english: "pervasive developmental disorder", japanese: "広汎性発達障害", category: "1. 臨床心理学・精神医学", related: "関連: PDD、autism spectrum disorder" },
+        { english: "posttraumatic stress disorder", japanese: "心的外傷後ストレス障害（PTSD）", category: "1. 臨床心理学・精神医学", related: "関連: trauma（トラウマ）、psychological treatment" },
+        { english: "preconscious", japanese: "前意識", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、conscious、unconscious" },
+        { english: "projective identification", japanese: "投射的同一視", category: "1. 臨床心理学・精神医学", related: "関連: primitive defense mechanism（原始的防衛機制）" },
+        { english: "insomnia", japanese: "不眠症", category: "1. 臨床心理学・精神医学", related: "関連: sleep disorder（睡眠障害）、fear of the dark" },
+        { english: "institutionalize", japanese: "施設に収容する", category: "1. 臨床心理学・精神医学", related: "関連: institutionalization（施設収容）、aged people" },
+        { english: "intake interview", japanese: "インテーク面接", category: "1. 臨床心理学・精神医学", related: "関連: initial interview、client's current problem" },
+        { english: "intellectualization", japanese: "知性化", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、abstract thinking" },
+        { english: "intrusive thought", japanese: "侵入思考", category: "1. 臨床心理学・精神医学", related: "関連: obsessive-compulsive disorder（強迫症）" },
+        { english: "irrational belief", japanese: "不合理な信念", category: "1. 臨床心理学・精神医学", related: "関連: cognitive-behavioral therapy（認知行動療法）" },
+        { english: "joining", japanese: "ジョイニング", category: "1. 臨床心理学・精神医学", related: "関連: family therapy（家族療法）、Minuchin" },
+        { english: "manic defense", japanese: "躁的防衛", category: "1. 臨床心理学・精神医学", related: "関連: Klein（クライン）、omnipotent denial（全能的否認）" },
+        { english: "masked depression", japanese: "仮面うつ病", category: "1. 臨床心理学・精神医学", related: "関連: screening test（スクリーニング検査）" },
+        { english: "mental disorder", japanese: "精神障害", category: "1. 臨床心理学・精神医学", related: "関連: diagnosis（診断）、psychopathology" },
+        { english: "mental retardation", japanese: "精神遅滞", category: "1. 臨床心理学・精神医学", related: "関連: intellectual disability、quality of life (QOL)" },
+        { english: "mood disorder", japanese: "気分障害", category: "1. 臨床心理学・精神医学", related: "関連: depressive disorder、bipolar disorder" },
+        { english: "mourning work", japanese: "喪の作業", category: "1. 臨床心理学・精神医学", related: "関連: grief work、detachment from lost object" },
+        { english: "fairy tale", japanese: "おとぎ話", category: "1. 臨床心理学・精神医学", related: "関連: Jung（ユング）、archetypes（原型）" },
+        { english: "fantasy", japanese: "空想", category: "1. 臨床心理学・精神医学", related: "関連: infantile fantasy（幼児期のエロティックな空想）" },
+        { english: "flashback", japanese: "フラッシュバック", category: "1. 臨床心理学・精神医学", related: "関連: PTSD、traumatic event（外傷体験）" },
+        { english: "flooding", japanese: "フラッディング", category: "1. 臨床心理学・精神医学", related: "関連: exposure therapy（エキスポージャー療法）" },
+        { english: "free association", japanese: "自由連想法", category: "1. 臨床心理学・精神医学", related: "関連: psychoanalysis（精神分析）、Freud" },
+        { english: "fulfill", japanese: "満たす、発揮する", category: "1. 臨床心理学・精神医学", related: "関連: actualizing tendency（自己実現傾向）、Rogers" },
+        { english: "generalized anxiety disorder", japanese: "全般性不安障害", category: "1. 臨床心理学・精神医学", related: "関連: GAD、chronic anxiety（慢性的な不安）" },
+        { english: "genogram", japanese: "ジェノグラム", category: "1. 臨床心理学・精神医学", related: "関連: family therapy（家族療法）、family history" },
+        { english: "hallucination", japanese: "幻覚", category: "1. 臨床心理学・精神医学", related: "関連: schizophrenia（統合失調症）、sensory deprivation" },
+        { english: "histrionic personality disorder", japanese: "演技性パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: dramatic behavior（劇的な行動）" },
+        { english: "hypnotize", japanese: "催眠をかける", category: "1. 臨床心理学・精神医学", related: "関連: hypnosis（催眠）、memory and fantasy" },
+        { english: "hypochondriasis", japanese: "心気症", category: "1. 臨床心理学・精神医学", related: "関連: somatic symptom disorder（身体症状症）" },
+        { english: "id", japanese: "イド、エス", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、ego（自我）、superego（超自我）" },
+        { english: "dissociative identity disorder", japanese: "解離性同一性障害", category: "1. 臨床心理学・精神医学", related: "関連: multiple personality disorder（多重人格障害）" },
+        { english: "double bind", japanese: "ダブルバインド（二重拘束）", category: "1. 臨床心理学・精神医学", related: "関連: Bateson（ベイトソン）、communication theory" },
+        { english: "dream analysis", japanese: "夢分析", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、unconscious（無意識）" },
+        { english: "dysthymic disorder", japanese: "気分変調性障害", category: "1. 臨床心理学・精神医学", related: "関連: dysthymia、depressive disorder" },
+        { english: "eating disorder", japanese: "摂食障害", category: "1. 臨床心理学・精神医学", related: "関連: anorexia nervosa、bulimia nervosa" },
+        { english: "ego boundary", japanese: "自我境界", category: "1. 臨床心理学・精神医学", related: "関連: schizophrenia（統合失調症）、ego loss" },
+        { english: "empowerment", japanese: "エンパワーメント", category: "1. 臨床心理学・精神医学", related: "関連: community psychology（地域心理学）" },
+        { english: "encounter group", japanese: "エンカウンターグループ", category: "1. 臨床心理学・精神医学", related: "関連: Rogers（ロジャーズ）、group psychotherapy" },
+        { english: "endogenous", japanese: "内因性の", category: "1. 臨床心理学・精神医学", related: "関連: endogenous depression（内因性うつ病）" },
+        { english: "evidence based approach", japanese: "エビデンスベーストアプローチ", category: "1. 臨床心理学・精神医学", related: "関連: scientific research（科学的研究）" },
+        { english: "exposure therapy", japanese: "エキスポージャー療法", category: "1. 臨床心理学・精神医学", related: "関連: obsessive-compulsive disorder、phobia" },
+        { english: "expressive therapy", japanese: "表現療法", category: "1. 臨床心理学・精神医学", related: "関連: art therapy（芸術療法）、artistic expression" },
+        { english: "facilitator", japanese: "ファシリテーター", category: "1. 臨床心理学・精神医学", related: "関連: group psychotherapy（集団心理療法）" },
+        { english: "defense mechanism", japanese: "防衛機制", category: "1. 臨床心理学・精神医学", related: "関連: Freud（フロイト）、protect from anxiety" },
+        { english: "delirium", japanese: "せん妄", category: "1. 臨床心理学・精神医学", related: "関連: acute confusion、hospitalization" },
+        { english: "delusion", japanese: "妄想", category: "1. 臨床心理学・精神医学", related: "関連: psychotic symptoms（精神病症状）" },
+        { english: "dementia", japanese: "認知症", category: "1. 臨床心理学・精神医学", related: "関連: memory loss（記憶の喪失）、hearing loss" },
+        { english: "denial", japanese: "否認", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、negative emotions" },
+        { english: "dependent personality disorder", japanese: "依存性パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: personality disorders（パーソナリティ障害）" },
+        { english: "depersonalization", japanese: "離人症、離人", category: "1. 臨床心理学・精神医学", related: "関連: depersonalization disorder（離人症障害）" },
+        { english: "depressive position", japanese: "抑うつポジション", category: "1. 臨床心理学・精神医学", related: "関連: Klein（クライン）、infant development" },
+        { english: "depth psychology", japanese: "深層心理学", category: "1. 臨床心理学・精神医学", related: "関連: Jung（ユング）、Freud（フロイト）" },
+        { english: "developmental disorder", japanese: "発達障害", category: "1. 臨床心理学・精神医学", related: "関連: neurodevelopmental disorders、mothers" },
+        { english: "displacement", japanese: "置き換え", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、target of an impulse" },
+        { english: "dissociative disorder", japanese: "解離性障害", category: "1. 臨床心理学・精神医学", related: "関連: dissociation（解離）、psychiatrist" },
+        { english: "dissociative fugue", japanese: "解離性遁走", category: "1. 臨床心理学・精神医学", related: "関連: dissociative disorder（解離性障害）" },
+        { english: "unconditional positive regard", japanese: "無条件の肯定的関心", category: "1. 臨床心理学・精神医学", related: "関連: Rogers（ロジャーズ）、self-confidence" },
+        { english: "working through", japanese: "作業療法、ワーキングスルー", category: "1. 臨床心理学・精神医学", related: "関連: psychoanalysis（精神分析）、inner conflicts" },
+        { english: "wound", japanese: "外傷、傷つき", category: "1. 臨床心理学・精神医学", related: "関連: basic fault（基礎欠損）" },
+        { english: "basic fault", japanese: "基礎欠損", category: "1. 臨床心理学・精神医学", related: "関連: Balint（バリント）、early childhood" },
+        { english: "adjustment disorder", japanese: "適応障害", category: "1. 臨床心理学・精神医学", related: "関連: stressful life experiences（ストレスフルな生活経験）" },
+        { english: "affect attunement", japanese: "情動調律", category: "1. 臨床心理学・精神医学", related: "関連: infant development（乳児の発達）" },
+        { english: "as-if personality", japanese: "かのようなパーソナリティ", category: "1. 臨床心理学・精神医学", related: "関連: Helene Deutsch（ドイッチュ）、borderline cases" },
+        { english: "general adaptation syndrome", japanese: "汎適応症候群", category: "1. 臨床心理学・精神医学", related: "関連: Selye（セリエ）、stress response" },
+        { english: "good-enough mother", japanese: "ほどよい母親", category: "1. 臨床心理学・精神医学", related: "関連: Winnicott（ウィニコット）、omnipotence" },
+        { english: "undoing", japanese: "打ち消し", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）" },
+        { english: "object loss", japanese: "対象喪失", category: "1. 臨床心理学・精神医学", related: "関連: trauma（トラウマ）、psychoanalysis" },
+        { english: "obsessive-compulsive disorder", japanese: "強迫性障害（OCD）", category: "1. 臨床心理学・精神医学", related: "関連: compulsive behavior（強迫行為）" },
+        { english: "script analysis", japanese: "脚本分析", category: "1. 臨床心理学・精神医学", related: "関連: transactional analysis（交流分析）、Eric Berne" },
+        { english: "social skills training", japanese: "ソーシャルスキルトレーニング（SST）", category: "1. 臨床心理学・精神医学", related: "関連: social skills（ソーシャルスキル）" },
+        { english: "somatoform disorder", japanese: "身体表現性障害", category: "1. 臨床心理学・精神医学", related: "関連: physical symptoms（身体症状）" },
+        { english: "splitting", japanese: "分裂", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、Klein" },
+        { english: "squiggle method", japanese: "スクイグル法", category: "1. 臨床心理学・精神医学", related: "関連: Winnicott（ウィニコット）、drawing technique" },
+        { english: "stressor", japanese: "ストレッサー", category: "1. 臨床心理学・精神医学", related: "関連: stress（ストレス）、social support" },
+        { english: "sublimation", japanese: "昇華", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）、Freud" },
+        { english: "synchronicity", japanese: "シンクロニシティ（共時性）", category: "1. 臨床心理学・精神医学", related: "関連: Jung（ユング）、meaningful coincidence" },
+        { english: "systematic desensitization", japanese: "系統的脱感作法", category: "1. 臨床心理学・精神医学", related: "関連: behavioral therapy（行動療法）、phobia（恐怖症）" },
+        { english: "test battery", japanese: "テストバッテリー", category: "1. 臨床心理学・精神医学", related: "関連: psychological assessment（心理査定）" },
+        { english: "token economy", japanese: "トークンエコノミー", category: "1. 臨床心理学・精神医学", related: "関連: behavior modification（行動変容）" },
+        { english: "transactional analysis", japanese: "交流分析", category: "1. 臨床心理学・精神医学", related: "関連: ego states（自我状態）" },
+        { english: "transitional object", japanese: "移行対象", category: "1. 臨床心理学・精神医学", related: "関連: Winnicott（ウィニコット）、not-me possession" },
+        { english: "psychodrama", japanese: "サイコドラマ（心理劇）", category: "1. 臨床心理学・精神医学", related: "関連: Moreno（モレノ）、group therapy" },
+        { english: "psychogenic", japanese: "心因性の", category: "1. 臨床心理学・精神医学", related: "関連: psychogenic amnesia（心因性健忘）" },
+        { english: "rapprochement", japanese: "再接近（期）", category: "1. 臨床心理学・精神医学", related: "関連: Mahler（マーラー）、separation-individuation" },
+        { english: "rationalization", japanese: "合理化", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）" },
+        { english: "reaction formation", japanese: "反動形成", category: "1. 臨床心理学・精神医学", related: "関連: defense mechanism（防衛機制）" },
+        { english: "reality testing", japanese: "現実検討（力）", category: "1. 臨床心理学・精神医学", related: "関連: ego function（自我機能）" },
+        { english: "recurrence", japanese: "再発", category: "1. 臨床心理学・精神医学", related: "関連: depression（うつ病）、prevention" },
+        { english: "reframing", japanese: "リフレーミング", category: "1. 臨床心理学・精神医学", related: "関連: family therapy（家族療法）" },
+        { english: "role playing", japanese: "ロールプレイ", category: "1. 臨床心理学・精神医学", related: "関連: behavioral rehearsal（行動リハーサル）" },
+        { english: "schizoid personality disorder", japanese: "スキゾイドパーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: personality disorders" },
+        { english: "schizotypal personality disorder", japanese: "統合失調型パーソナリティ障害", category: "1. 臨床心理学・精神医学", related: "関連: psychotherapy" },
+        { english: "self-help group", japanese: "自助グループ", category: "1. 臨床心理学・精神医学", related: "関連: peer support（ピアサポート）" },
+        { english: "social anxiety disorder", japanese: "社交不安障害（SAD）", category: "1. 臨床心理学・精神医学", related: "関連: anxiety disorder（不安障害）" },
+
+        // ==================== 2. 発達心理学 ====================
+        { english: "tantrum", japanese: "かんしゃく", category: "2. 発達心理学", related: "関連: emotional or behavioral problems（情緒・行動障害）" },
+        { english: "theory of mind", japanese: "心の理論", category: "2. 発達心理学", related: "関連: false belief task（誤信念課題）、autism" },
+        { english: "vocalization", japanese: "発声、声を出すこと", category: "2. 発達心理学", related: "関連: vocalize（声に出す）、gestures（身振り）" },
+        { english: "zone of proximal development", japanese: "発達の最近接領域（ZPD）", category: "2. 発達心理学", related: "関連: Vygotsky（ヴィゴツキー）、scaffolding（足場かけ）" },
+        { english: "animism", japanese: "アニミズム", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、preoperational stage（前操作期）" },
+        { english: "chumship", japanese: "チャムシップ", category: "2. 発達心理学", related: "関連: Sullivan（サリヴァン）、preadolescence（前青年期）" },
+        { english: "false belief task", japanese: "誤信念課題", category: "2. 発達心理学", related: "関連: theory of mind（心の理論）、Sally-Anne test" },
+        { english: "gang age", japanese: "ギャングエイジ", category: "2. 発達心理学", related: "関連: late childhood（後児期）、peer group（仲間集団）" },
+        { english: "identity crisis", japanese: "アイデンティティ危機", category: "2. 発達心理学", related: "関連: Erikson（エリクソン）、adolescence（青年期）" },
+        { english: "midlife crisis", japanese: "中年期危機", category: "2. 発達心理学", related: "関連: Jung（ユング）、maturing process" },
+        { english: "nuclear family", japanese: "核家族", category: "2. 発達心理学", related: "関連: family structure（家族構造）" },
+        { english: "role-taking", japanese: "役割取得", category: "2. 発達心理学", related: "関連: moral development（道徳性の発達）、perspective-taking" },
+        { english: "three mountains task", japanese: "三つ山課題", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、egocentrism（自己中心性）" },
+        { english: "identity diffusion", japanese: "アイデンティティ拡散", category: "2. 発達心理学", related: "関連: Marcia（マーシャ）、identity status" },
+        { english: "imprinting", japanese: "刷り込み、インプリンティング", category: "2. 発達心理学", related: "関連: Konrad Lorenz（ローレンツ）、critical period（臨界期）" },
+        { english: "internal speech", japanese: "内言", category: "2. 発達心理学", related: "関連: Vygotsky（ヴィゴツキー）、external speech（外言）" },
+        { english: "internal working model", japanese: "内的ワーキングモデル", category: "2. 発達心理学", related: "関連: Bowlby（ボウルビィ）、attachment（愛着）" },
+        { english: "maternal deprivation", japanese: "母性剥奪、マターナル・デプリベーション", category: "2. 発達心理学", related: "関連: Bowlby（ボウルビィ）、attachment disorder" },
+        { english: "object permanence", japanese: "対象の永続性", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、sensorimotor stage（感覚運動期）" },
+        { english: "parallel play", japanese: "平行遊び", category: "2. 発達心理学", related: "関連: Parten（パーテン）、early childhood" },
+        { english: "preferential looking method", japanese: "選好注視法", category: "2. 発達心理学", related: "関連: Fantz（ファンツ）、infant perception" },
+        { english: "preoperational period", japanese: "前操作期", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、egocentrism（自己中心性）" },
+        { english: "preschooler", japanese: "就学前児童、幼児", category: "2. 発達心理学", related: "関連: cognitive development（認知発達）" },
+        { english: "psycho-social moratorium", japanese: "心理社会的モラトリアム", category: "2. 発達心理学", related: "関連: Erikson（エリクソン）、adolescence" },
+        { english: "schema", japanese: "シェマ、スキーマ", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、assimilation & accommodation" },
+        { english: "sibling", japanese: "きょうだい", category: "2. 発達心理学", related: "関連: fraternal twins（二卵性双生児）、genes" },
+        { english: "temperament", japanese: "気質", category: "2. 発達心理学", related: "関連: Thomas & Chess、personality development" },
+        { english: "toddler", japanese: "幼児、よちよち歩きの子", category: "2. 発達心理学", related: "関連: primary circular reactions" },
+        { english: "circular reaction", japanese: "循環反応", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、sensorimotor stage" },
+        { english: "cohort", japanese: "コホート", category: "2. 発達心理学", related: "関連: cohort effect（コホート効果）、generation" },
+        { english: "concrete operational stage", japanese: "具体的操作期", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、conservation（保存）" },
+        { english: "conservation", japanese: "保存", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、concrete operational stage" },
+        { english: "critical period", japanese: "臨界期", category: "2. 発達心理学", related: "関連: sensitive period（感受性期）、language acquisition" },
+        { english: "egocentrism", japanese: "自己中心性", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、three mountains task" },
+        { english: "epigenetic theory", japanese: "漸成説", category: "2. 発達心理学", related: "関連: Erikson（エリクソン）、eight stages" },
+        { english: "external speech", japanese: "外言", category: "2. 発達心理学", related: "関連: Vygotsky（ヴィゴツキー）、internal speech（内言）" },
+        { english: "foreclosure", japanese: "早期完了（型）", category: "2. 発達心理学", related: "関連: Marcia（マーシャ）、identity status" },
+        { english: "formal operation", japanese: "形式的操作", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、formal operational stage" },
+        { english: "hospitalism", japanese: "ホスピタリズム", category: "2. 発達心理学", related: "関連: René Spitz（スピッツ）、institutional care" },
+        { english: "weaning", japanese: "離乳", category: "2. 発達心理学", related: "関連: weaning process、adolescence" },
+        { english: "youth", japanese: "青年、青年期", category: "2. 発達心理学", related: "関連: internalizing / externalizing problems" },
+        { english: "basic trust", japanese: "基本的信頼", category: "2. 発達心理学", related: "関連: Erikson（エリクソン）、basic mistrust" },
+        { english: "coordination", japanese: "協調", category: "2. 発達心理学", related: "関連: joint attention（共同注意）" },
+        { english: "cross-sectional study", japanese: "横断的研究", category: "2. 発達心理学", related: "関連: longitudinal study（縦断的研究）" },
+        { english: "habituation", japanese: "慣れ、習慣化", category: "2. 発達心理学", related: "関連: dishabituation（脱習慣化）、exposure therapy" },
+        { english: "intimate", japanese: "親密な", category: "2. 発達心理学", related: "関連: intimacy vs isolation（親密対隔離）" },
+        { english: "life cycle", japanese: "ライフサイクル", category: "2. 発達心理学", related: "関連: Erikson（エリクソン）、eight stages" },
+        { english: "longitudinal study", japanese: "縦断的研究", category: "2. 発達心理学", related: "関連: Seattle Study、cross-sectional study" },
+        { english: "mistrust", japanese: "不信、不信感", category: "2. 発達心理学", related: "関連: trust vs mistrust（信頼対不信）" },
+        { english: "neonatal", japanese: "新生児の", category: "2. 発達心理学", related: "関連: neonate（新生児）、immature defense" },
+        { english: "primitive", japanese: "原始的な", category: "2. 発達心理学", related: "関連: primitive defense mechanism（原始的防衛機制）" },
+        { english: "symbolic play", japanese: "象徴遊び", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、pretend play（ごっこ遊び）" },
+        { english: "onset", japanese: "開始、始まり", category: "2. 発達心理学", related: "関連: onset of puberty（思春期の始まり）" },
+        { english: "secure base", japanese: "安全基地", category: "2. 発達心理学", related: "関連: Bowlby（ボウルビィ）、attachment" },
+        { english: "vocabulary", japanese: "語彙", category: "2. 発達心理学", related: "関連: language acquisition（言語獲得）" },
+        { english: "operation", japanese: "操作、働き", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、logical principles" },
+        { english: "puberty", japanese: "思春期", category: "2. 発達心理学", related: "関連: physical maturation、age of storm and stress" },
+        { english: "assimilation", japanese: "同化", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、accommodation（調節）" },
+        { english: "separation anxiety", japanese: "分離不安", category: "2. 発達心理学", related: "関連: Ainsworth（エインスワース）、attachment" },
+        { english: "transition", japanese: "移行期、推移", category: "2. 発達心理学", related: "関連: social transition、adolescence" },
+        { english: "accommodation", japanese: "調節", category: "2. 発達心理学", related: "関連: Piaget（ピアジェ）、assimilation（同化）" },
+        { english: "developmental psychology", japanese: "発達心理学", category: "2. 発達心理学", related: "関連: Jean Piaget（ピアジェ）" },
+        { english: "readiness", japanese: "レディネス、準備性", category: "2. 発達心理学", related: "関連: Thorndike（ソーンダイク）、learning" },
+        { english: "temper", japanese: "気質、かんしゃく", category: "2. 発達心理学", related: "関連: temper tantrum（かんしゃく発作）" },
+        { english: "visual cliff", japanese: "視覚的断崖", category: "2. 発達心理学", related: "関連: Gibson & Walk、depth perception（奥行き知覚）" },
+        { english: "development", japanese: "発達、開発", category: "2. 発達心理学", related: "関連: developmental psychology（発達心理学）" },
+        { english: "play", japanese: "遊び、遊ぶ", category: "2. 発達心理学", related: "関連: play therapy（遊戯療法）、social development" },
+        { english: "infant", japanese: "乳児、幼児", category: "2. 発達心理学", related: "関連: infancy（乳幼児期）、Strange Situation Procedure" },
+        { english: "childhood", japanese: "児童期、子ども時代", category: "2. 発達心理学", related: "関連: early/late childhood（早期/後期児童期）" },
+        { english: "develop", japanese: "発達する、発達させる", category: "2. 発達心理学", related: "関連: nature and nurture（氏と育ち・遺伝と環境）" },
+        { english: "growth", japanese: "成長、発展", category: "2. 発達心理学", related: "関連: self-actualization（自己実現）、personal growth" },
+        { english: "attachment", japanese: "愛着、アタッチメント", category: "2. 発達心理学", related: "関連: John Bowlby（ボウルビィ）、emotional bond" },
+        { english: "adolescence", japanese: "青年期", category: "2. 発達心理学", related: "関連: adolescent（青年期の）、identity achievement" },
+        { english: "autonomy", japanese: "自律性", category: "2. 発達心理学", related: "関連: Erikson（エリクソン：自主性/自律性対恥・疑惑）" },
+        { english: "identity", japanese: "アイデンティティ、同一性", category: "2. 発達心理学", related: "関連: identity diffusion（アイデンティティ拡散）" },
+        { english: "aging", japanese: "エイジング、老化、加齢", category: "2. 発達心理学", related: "関連: healthy aging（健康的エイジング）" },
+        { english: "adulthood", japanese: "成人期", category: "2. 発達心理学", related: "関連: internal working model（内的ワーキングモデル）" },
+        { english: "juvenile", japanese: "青少年、青少年の", category: "2. 発達心理学", related: "関連: juvenile development（青少年の発達）" },
+        { english: "mature", japanese: "成熟した、成熟する", category: "2. 発達心理学", related: "関連: maturation（成熟）" },
+        { english: "peer", japanese: "仲間、同僚", category: "2. 発達心理学", related: "関連: peer relations（仲間関係）、peer pressure" },
+        { english: "secure", japanese: "安心した、安全な、安定した", category: "2. 発達心理学", related: "関連: secure foundation / base（安全基地）、attachment" },
+        { english: "maternal", japanese: "母の、母性の", category: "2. 発達心理学", related: "関連: maternal deprivation（母性剥奪）" },
+        { english: "novel", japanese: "新奇な、新しい", category: "2. 発達心理学", related: "関連: novel stimuli（新奇刺激）、habituation（習慣化）" },
+        { english: "bond", japanese: "絆", category: "2. 発達心理学", related: "関連: caregiver-child relationship（養育者と子どもの関係）" },
+        { english: "caregiver", japanese: "養育者、介護者", category: "2. 発達心理学", related: "関連: attachment formation（愛着形成）" },
+        { english: "competence", japanese: "コンピテンス、能力", category: "2. 発達心理学", related: "関連: social competence（社会的コンピテンス）、competent" },
+        { english: "lifetime", japanese: "生涯", category: "2. 発達心理学", related: "関連: lifespan development（生涯発達）" },
+        { english: "elderly people", japanese: "高齢者", category: "2. 発達心理学", related: "関連: aerobic exercise（有酸素運動）、memory" },
+        { english: "longevity", japanese: "長寿", category: "2. 発達心理学", related: "関連: average life expectancy（平均寿命）" },
+
+        // ==================== 3. 研究法・統計学 ====================
+        { english: "research", japanese: "調査、研究", category: "3. 研究法・統計学", related: "関連: objective results（客観的な結果）" },
+        { english: "control", japanese: "統制する、コントロールする", category: "3. 研究法・統計学", related: "関連: control group（統制群）" },
+        { english: "test", japanese: "検証する、テストする", category: "3. 研究法・統計学", related: "関連: hypothesis verification（仮説検証）" },
+        { english: "data", japanese: "データ、資料", category: "3. 研究法・統計学", related: "関連: objective data（客観的データ）" },
+        { english: "condition", japanese: "条件", category: "3. 研究法・統計学", related: "関連: conditioning（条件づけ）" },
+        { english: "subject", japanese: "参加者、被験者、主題", category: "3. 研究法・統計学", related: "関連: participant（参加者）" },
+        { english: "experiment", japanese: "実験", category: "3. 研究法・統計学", related: "関連: experimental group（実験群）" },
+        { english: "mean", japanese: "平均", category: "3. 研究法・統計学", related: "関連: mean score（平均値）、t-test（t検定）" },
+        { english: "measure", japanese: "測定する", category: "3. 研究法・統計学", related: "関連: measurement（測定）、intelligence tests" },
+        { english: "hypothesis", japanese: "仮説", category: "3. 研究法・統計学", related: "関連: null hypothesis（帰無仮説）" },
+        { english: "rate", japanese: "評価する、割合", category: "3. 研究法・統計学", related: "関連: rating scale（評定尺度）" },
+        { english: "significantly", japanese: "有意に、非常に", category: "3. 研究法・統計学", related: "関連: significant difference（有意差）" },
+        { english: "interaction", japanese: "交互作用、相互作用", category: "3. 研究法・統計学", related: "関連: ANOVA（分散分析）" },
+        { english: "scale", japanese: "尺度、基準", category: "3. 研究法・統計学", related: "関連: rating scale（評定尺度）" },
+        { english: "survey", japanese: "調査", category: "3. 研究法・統計学", related: "関連: questionnaire survey（質問紙調査）" },
+        { english: "value", japanese: "値、価値", category: "3. 研究法・統計学", related: "関連: correlation coefficient（相関係数）" },
+        { english: "chance", japanese: "偶然、可能性", category: "3. 研究法・統計学", related: "関連: chance alone（偶然のみ）" },
+        { english: "population", japanese: "母集団", category: "3. 研究法・統計学", related: "関連: sample（標本）、inferential statistics" },
+        { english: "complete", japanese: "仕上げる、完成させる", category: "3. 研究法・統計学", related: "関連: complete a task（課題を完了する）" },
+        { english: "design", japanese: "デザイン、計画、実験計画", category: "3. 研究法・統計学", related: "関連: experimental design（実験計画法）、double blind" },
+        { english: "participant", japanese: "参加者", category: "3. 研究法・統計学", related: "関連: subject（被験者）" },
+        { english: "conclusion", japanese: "結論", category: "3. 研究法・統計学", related: "関連: draw a conclusion（結論を導く）" },
+        { english: "average", japanese: "平均、平均の", category: "3. 研究法・統計学", related: "関連: mean（平均）" },
+        { english: "procedure", japanese: "手続き", category: "3. 研究法・統計学", related: "関連: experimental procedure（実験手続き）" },
+        { english: "sample", japanese: "標本、サンプル", category: "3. 研究法・統計学", related: "関連: sampling（標本抽出）、population（母集団）" },
+        { english: "validity", japanese: "妥当性", category: "3. 研究法・統計学", related: "関連: internal/external validity（内的/外的妥当性）" },
+        { english: "causal", japanese: "原因の、因果関係の", category: "3. 研究法・統計学", related: "関連: causal relationship（因果関係）" },
+        { english: "investigation", japanese: "調査", category: "3. 研究法・統計学", related: "関連: investigate（調査する）" },
+        { english: "laboratory", japanese: "実験室、研究室", category: "3. 研究法・統計学", related: "関連: laboratory experiment（実験室実験）" },
+        { english: "self-report", japanese: "自己報告", category: "3. 研究法・統計学", related: "関連: self-report inventory（自己報告式質問紙）" },
+        { english: "observation", japanese: "観察", category: "3. 研究法・統計学", related: "関連: observational study（観察研究）" },
+        { english: "variable", japanese: "変数", category: "3. 研究法・統計学", related: "関連: independent/dependent variable（独立/従属変数）" },
+        { english: "examine", japanese: "調査する、検証する", category: "3. 研究法・統計学", related: "関連: examination（調査、試験）" },
+        { english: "comparison", japanese: "比較", category: "3. 研究法・統計学", related: "関連: compare（比較する）" },
+        { english: "null hypothesis", japanese: "帰無仮説", category: "3. 研究法・統計学", related: "関連: Type I error（第1種の誤り）、reject（棄却する）" },
+        { english: "trial", japanese: "試行", category: "3. 研究法・統計学", related: "関連: trial run（試行）" },
+        { english: "variance", japanese: "分散、バラツキ", category: "3. 研究法・統計学", related: "関連: ANOVA（分散分析）" },
+        { english: "generate", japanese: "生成する、生み出す", category: "3. 研究法・統計学", related: "関連: generate a hypothesis（仮説を生成する）" },
+        { english: "manipulation", japanese: "操作", category: "3. 研究法・統計学", related: "関連: manipulate（操作する）" },
+        { english: "methodology", japanese: "方法、方法論", category: "3. 研究法・統計学", related: "関連: narrative methodology（ナラティブ手法）" },
+        { english: "baseline", japanese: "ベースライン", category: "3. 研究法・統計学", related: "関連: baseline phase（ベースライン期）" },
+        { english: "correlation", japanese: "相関、相関関係", category: "3. 研究法・統計学", related: "関連: correlation coefficient（相関係数）" },
+        { english: "index", japanese: "指標、指数", category: "3. 研究法・統計学", related: "関連: physiological index（生理的指標）" },
+        { english: "likelihood", japanese: "可能性、見込み", category: "3. 研究法・統計学", related: "関連: be likely to（〜しそうである）" },
+        { english: "case study", japanese: "ケーススタディ、事例研究", category: "3. 研究法・統計学", related: "関連: clinical psychology（臨床心理学）" },
+        { english: "conduct", japanese: "行う、導く", category: "3. 研究法・統計学", related: "関連: conduct research（研究を行う）" },
+        { english: "introspection", japanese: "内省、内観", category: "3. 研究法・統計学", related: "関連: Wundt（ヴント）" },
+        { english: "independent variable", japanese: "独立変数", category: "3. 研究法・統計学", related: "関連: dependent variable（従属変数）" },
+        { english: "reliability", japanese: "信頼性", category: "3. 研究法・統計学", related: "関連: test-retest reliability（再検査信頼性）" },
+        { english: "statement", japanese: "（質問）項目、述べること", category: "3. 研究法・統計学", related: "関連: questionnaire item（質問項目）" },
+        { english: "control group", japanese: "統制群", category: "3. 研究法・統計学", related: "関連: experimental group（実験群）" },
+        { english: "external validity", japanese: "外的妥当性", category: "3. 研究法・統計学", related: "関連: internal validity（内的妥当性）、generalization" },
+        { english: "inventory", japanese: "質問紙、目録", category: "3. 研究法・統計学", related: "関連: BDI（ベック抑うつ質問紙）、self-report" },
+        { english: "mode", japanese: "モード、最頻値", category: "3. 研究法・統計学", related: "関連: mean（平均値）、median（中央値）" },
+        { english: "quantitative", japanese: "定量的な、量的", category: "3. 研究法・統計学", related: "関連: qualitative（質的な）、quantitative survey" },
+        { english: "main effect", japanese: "主効果", category: "3. 研究法・統計学", related: "関連: interaction（交互作用）、ANOVA" },
+        { english: "psychometric", japanese: "心理測定の、計量心理学の", category: "3. 研究法・統計学", related: "関連: psychometric test（心理測定テスト）" },
+        { english: "questionnaire", japanese: "質問紙", category: "3. 研究法・統計学", related: "関連: survey（調査）" },
+        { english: "replicate", japanese: "追試する、再現する", category: "3. 研究法・統計学", related: "関連: replication（再現性、追試）" },
+        { english: "statistics", japanese: "統計学、統計", category: "3. 研究法・統計学", related: "関連: statistical analysis（統計分析）" },
+        { english: "subscale", japanese: "下位尺度", category: "3. 研究法・統計学", related: "関連: MMPI、scale（尺度）" },
+        { english: "summary", japanese: "要約、サマリー", category: "3. 研究法・統計学", related: "関連: summarize（要約する）" },
+        { english: "cross-cultural", japanese: "異文化間の、比較文化的な", category: "3. 研究法・統計学", related: "関連: cross-cultural research（比較文化研究）" },
+        { english: "dependent variable", japanese: "従属変数", category: "3. 研究法・統計学", related: "関連: independent variable（独立変数）" },
+        { english: "experimental group", japanese: "実験群", category: "3. 研究法・統計学", related: "関連: control group（統制群）" },
+        { english: "internal validity", japanese: "内的妥当性", category: "3. 研究法・統計学", related: "関連: external validity（外的妥当性）" },
+        { english: "positivist", japanese: "実証主義者", category: "3. 研究法・統計学", related: "関連: positivism（実証主義）" },
+        { english: "assign", japanese: "割り当てる", category: "3. 研究法・統計学", related: "関連: random assignment（無作為割り当て）" },
+        { english: "Cronbach's alpha", japanese: "クロンバックのアルファ（係数）", category: "3. 研究法・統計学", related: "関連: internal consistency（内的整合性）" },
+        { english: "effect size", japanese: "効果量", category: "3. 研究法・統計学", related: "関連: meta-analysis（メタ分析）" },
+        { english: "experimental condition", japanese: "実験条件", category: "3. 研究法・統計学", related: "関連: control condition（統制条件）" },
+        { english: "internal consistency", japanese: "内的整合性", category: "3. 研究法・統計学", related: "関連: Cronbach's alpha（クロンバックのα）" },
+        { english: "interval scale", japanese: "間隔尺度", category: "3. 研究法・統計学", related: "関連: nominal/ordinal/ratio scale（名義/順序/比率尺度）" },
+        { english: "operationalization", japanese: "操作定義、操作主義", category: "3. 研究法・統計学", related: "関連: operational definition（操作的定義）" },
+        { english: "significant difference", japanese: "有意差", category: "3. 研究法・統計学", related: "関連: statistically significant（統計的に有意な）" },
+        { english: "test-retest reliability", japanese: "再検査信頼性", category: "3. 研究法・統計学", related: "関連: correlation（相関）" },
+        { english: "administer", japanese: "（テスト等を）実施する、行う", category: "3. 研究法・統計学", related: "関連: administration（実施、運営）" },
+        { english: "coefficient", japanese: "係数", category: "3. 研究法・統計学", related: "関連: correlation coefficient（相関係数）" },
+        { english: "confounding", japanese: "交絡（させる）", category: "3. 研究法・統計学", related: "関連: confounding factor（交絡要因）" },
+        { english: "content analysis", japanese: "内容分析", category: "3. 研究法・統計学", related: "関連: qualitative research（質的研究）" },
+        { english: "counterbalance", japanese: "相殺する、カウンターバランス", category: "3. 研究法・統計学", related: "関連: order of presentation（提示順序）" },
+        { english: "factor analysis", japanese: "因子分析", category: "3. 研究法・統計学", related: "関連: Cattell（キャッテル）、16PF" },
+        { english: "Likert scale", japanese: "リッカート尺度", category: "3. 研究法・統計学", related: "関連: rating scale（評定尺度）" },
+        { english: "meta analysis", japanese: "メタ分析", category: "3. 研究法・統計学", related: "関連: effect size（効果量）、systematic review" },
+        { english: "nominal scale", japanese: "名義尺度", category: "3. 研究法・統計学", related: "関連: ordinal/interval/ratio scale（順序/間隔/比率尺度）" },
+        { english: "normal distribution", japanese: "正規分布", category: "3. 研究法・統計学", related: "関連: mean（平均値）、median（中央値）、mode（最頻値）" },
+        { english: "open-ended question", japanese: "自由回答式質問（法）", category: "3. 研究法・統計学", related: "関連: subjective experience（主観的経験）" },
+        { english: "ordinal scale", japanese: "順序尺度", category: "3. 研究法・統計学", related: "関連: rank order（順位）" },
+        { english: "outlier", japanese: "外れ値、異常値", category: "3. 研究法・統計学", related: "関連: extreme value（極端な値）" },
+        { english: "qualitative approach", japanese: "質的アプローチ", category: "3. 研究法・統計学", related: "関連: narrative analysis（ナラティブ分析）" },
+        { english: "random assignment", japanese: "ランダム割り当て、無作為割り当て", category: "3. 研究法・統計学", related: "関連: experimental condition（実験条件）" },
+        { english: "random sampling", japanese: "無作為抽出、ランダムサンプリング", category: "3. 研究法・統計学", related: "関連: survey research（調査研究）" },
+        { english: "ratio scale", japanese: "比率尺度", category: "3. 研究法・統計学", related: "関連: absolute zero point（絶対ゼロ点）" },
+        { english: "regression analysis", japanese: "回帰分析", category: "3. 研究法・統計学", related: "関連: linear regression（線形回帰）" },
+        { english: "respondent", japanese: "回答者", category: "3. 研究法・統計学", related: "関連: survey respondents（調査回答者）" },
+        { english: "semi-structured", japanese: "半構造化の", category: "3. 研究法・統計学", related: "関連: semi-structured interview（半構造化面接）" },
+        { english: "situation sampling method", japanese: "場面見本法", category: "3. 研究法・統計学", related: "関連: observational method（観察法）" },
+        { english: "standard deviation", japanese: "標準偏差", category: "3. 研究法・統計学", related: "関連: deviation of score（得点の偏差）" },
+        { english: "standardize", japanese: "標準化する", category: "3. 研究法・統計学", related: "関連: standardized test（標準化テスト）" },
+        { english: "subgroup", japanese: "下位グループ", category: "3. 研究法・統計学", related: "関連: experimental group（実験群）" },
+        { english: "analogue study", japanese: "アナログ研究", category: "3. 研究法・統計学", related: "関連: clinical population（臨床群）" },
+        { english: "double blind test", japanese: "二重盲検法、ダブルブラインドテスト", category: "3. 研究法・統計学", related: "関連: experimenter bias（実験者バイアス）" },
+
+        // ==================== 4. 社会心理学 ====================
+        { english: "risky shift", japanese: "リスキーシフト", category: "4. 社会心理学", related: "関連: group polarization（集団極化）" },
+        { english: "secondary group", japanese: "二次集団", category: "4. 社会心理学", related: "関連: primary group（一次集団）" },
+        { english: "self-fulfilling prophecy", japanese: "自己成就的予言", category: "4. 社会心理学", related: "関連: Pygmalion effect（ピグマリオン効果）" },
+        { english: "self-presentation", japanese: "自己提示", category: "4. 社会心理学", related: "関連: impression management（印象管理）" },
+        { english: "self-serving bias", japanese: "セルフサービングバイアス", category: "4. 社会心理学", related: "関連: attribution bias（帰属バイアス）" },
+        { english: "sleeper effect", japanese: "スリーパー効果", category: "4. 社会心理学", related: "関連: Hovland（ホブランド）、attitude change（態度変容）" },
+        { english: "social dilemma", japanese: "社会的ジレンマ", category: "4. 社会心理学", related: "関連: tragedy of the commons（コモンズの悲劇）" },
+        { english: "social facilitation", japanese: "社会的促進", category: "4. 社会心理学", related: "関連: Zajonc（ザイアンス）、social inhibition（社会的抑制）" },
+        { english: "social loafing", japanese: "社会的手抜き", category: "4. 社会心理学", related: "関連: Ringelmann effect（リンゲルマン効果）" },
+        { english: "zero-sum game", japanese: "ゼロサムゲーム", category: "4. 社会心理学", related: "関連: prisoners' dilemma（囚人のジレンマ）" },
+        { english: "confirmation bias", japanese: "確証バイアス", category: "4. 社会心理学", related: "関連: cognitive dissonance（認知的不協和）" },
+        { english: "diffusion of responsibility", japanese: "責任の分散", category: "4. 社会心理学", related: "関連: bystander effect（傍観者効果）、Darley & Latané" },
+        { english: "mere exposure effect", japanese: "単純接触効果", category: "4. 社会心理学", related: "関連: Zajonc（ザイアンス）、familiarity" },
+        { english: "elaboration likelihood model", japanese: "精緻化見込みモデル（ELM）", category: "4. 社会心理学", related: "関連: Petty & Cacioppo、central/peripheral route" },
+        { english: "fundamental attribution error", japanese: "根本的帰属の誤り", category: "4. 社会心理学", related: "関連: Ross（ロス）、actor-observer bias" },
+        { english: "group polarization", japanese: "集団極化", category: "4. 社会心理学", related: "関連: risky shift（リスキーシフト）" },
+        { english: "halo effect", japanese: "ハロー効果（光背効果）", category: "4. 社会心理学", related: "関連: Thorndike（ソーンダイク）、impression formation" },
+        { english: "helping behavior", japanese: "援助行動", category: "4. 社会心理学", related: "関連: altruism（利他行動）、bystander effect" },
+        { english: "in-group", japanese: "内集団", category: "4. 社会心理学", related: "関連: out-group（外集団）、in-group favoritism" },
+        { english: "marginal man", japanese: "周辺人（マージナルマン）", category: "4. 社会心理学", related: "関連: Lewin（レヴィン）、cult-adolescent" },
+        { english: "norm", japanese: "規範、基準", category: "4. 社会心理学", related: "関連: social norms（社会的規範）" },
+        { english: "out-group", japanese: "外集団", category: "4. 社会心理学", related: "関連: in-group（内集団）" },
+        { english: "positive illusion", japanese: "ポジティブ幻想", category: "4. 社会心理学", related: "関連: mental health（精神的健康）" },
+        { english: "primary group", japanese: "一次集団", category: "4. 社会心理学", related: "関連: Cooley（クーリー）、secondary group" },
+        { english: "prisoners' dilemma", japanese: "囚人のジレンマ", category: "4. 社会心理学", related: "関連: game theory（ゲーム理論）、social dilemma" },
+        { english: "prosocial behavior", japanese: "向社会的行動", category: "4. 社会心理学", related: "関連: helping behavior（援助行動）" },
+        { english: "informal", japanese: "非公式な、非形式的な", category: "4. 社会心理学", related: "関連: informal feedback（非公式なフィードバック）" },
+        { english: "delinquent", japanese: "非行の、非行少年", category: "4. 社会心理学", related: "関連: juvenile delinquency（少年非行）" },
+        { english: "morale", japanese: "モラール、士気", category: "4. 社会心理学", related: "関連: productivity（生産性）" },
+        { english: "obedience", japanese: "服従", category: "4. 社会心理学", related: "関連: Milgram experiment（ミルグラム実験）" },
+        { english: "persuasive", japanese: "説得的な、説得力のある", category: "4. 社会心理学", related: "関連: attitude change（態度変容）" },
+        { english: "prejudice", japanese: "偏見、先入観", category: "4. 社会心理学", related: "関連: discrimination（差別）、stereotypes" },
+        { english: "reactance", japanese: "リアクタンス（心理的リアクタンス）", category: "4. 社会心理学", related: "関連: Brehm（ブレーム）、freedom of choice" },
+        { english: "social psychology", japanese: "社会心理学", category: "4. 社会心理学", related: "関連: Lewin（レヴィン）、interaction" },
+        { english: "action research", japanese: "アクションリサーチ", category: "4. 社会心理学", related: "関連: Lewin（レヴィン）、applied social psychology" },
+        { english: "altruism", japanese: "利他主義、利他性", category: "4. 社会心理学", related: "関連: altruistic behavior（利他行動）" },
+        { english: "bystander effect", japanese: "傍観者効果", category: "4. 社会心理学", related: "関連: diffusion of responsibility（責任の分散）" },
+        { english: "cautious shift", japanese: "コーシャスシフト", category: "4. 社会心理学", related: "関連: risky shift（リスキーシフト）" },
+        { english: "cognitive dissonance", japanese: "認知的不協和", category: "4. 社会心理学", related: "関連: Festinger（フェスティンガー）、dissonance reduction" },
+        { english: "justice", japanese: "公正、正義", category: "4. 社会心理学", related: "関連: distributive justice（分配的正義）" },
+        { english: "misattribution", japanese: "誤帰属", category: "4. 社会心理学", related: "関連: Dutton & Aron（吊り橋効果の実験）" },
+        { english: "eye contact", japanese: "アイコンタクト", category: "4. 社会心理学", related: "関連: nonverbal communication（非言語コミュニケーション）" },
+        { english: "reciprocal", japanese: "互恵的、相互的な", category: "4. 社会心理学", related: "関連: reciprocity（互恵性）" },
+        { english: "self-consciousness", japanese: "自意識、自己意識", category: "4. 社会心理学", related: "関連: public/private self-consciousness" },
+        { english: "self referencing", japanese: "社会的参照", category: "4. 社会心理学", related: "関連: infant social referencing（乳児の社会的参照）" },
+        { english: "socialization", japanese: "社会化", category: "4. 社会心理学", related: "関連: agent of socialization（社会化のエージェント）" },
+        { english: "workplace", japanese: "職場", category: "4. 社会心理学", related: "関連: workplace stress（職場のストレス）" },
+        { english: "appearance", japanese: "見かけ、外見", category: "4. 社会心理学", related: "関連: physical attractiveness（身体的魅力）" },
+        { english: "gesture", japanese: "ジェスチャー、身ぶり", category: "4. 社会心理学", related: "関連: nonverbal behavior（非言語行動）" },
+        { english: "leader", japanese: "リーダー", category: "4. 社会心理学", related: "関連: leadership（リーダーシップ）、democratic leader" },
+        { english: "conformity", japanese: "同調", category: "4. 社会心理学", related: "関連: Asch（アッシュ）、Asch experiment" },
+        { english: "impression", japanese: "印象", category: "4. 社会心理学", related: "関連: impression formation（印象形成）、Asch" },
+        { english: "role", japanese: "役割", category: "4. 社会心理学", related: "関連: role conflict（役割葛藤）、role expectations" },
+        { english: "attitude", japanese: "態度", category: "4. 社会心理学", related: "関連: attitude measurement（態度測定）" },
+        { english: "solitary", japanese: "孤独な、単独の", category: "4. 社会心理学", related: "関連: solitude（孤独）、solitary death（孤独死）" },
+        { english: "bias", japanese: "偏見、バイアス", category: "4. 社会心理学", related: "関連: self-serving bias（自己奉仕バイアス）" },
+        { english: "self-disclosure", japanese: "自己開示", category: "4. 社会心理学", related: "関連: Jourard（ジュラード）、intimacy（親密さ）" },
+        { english: "stereotype", japanese: "ステレオタイプ", category: "4. 社会心理学", related: "関連: prejudice（偏見）、discrimination（差別）" },
+        { english: "gender", japanese: "ジェンダー", category: "4. 社会心理学", related: "関連: gender identity（ジェンダーアイデンティティ）" },
+        { english: "attraction", japanese: "魅力、対人魅力", category: "4. 社会心理学", related: "関連: interpersonal attraction（対人魅力）" },
+        { english: "authority", japanese: "権威", category: "4. 社会心理学", related: "関連: Milgram experiment（ミルグラム実験）" },
+        { english: "imitate", japanese: "模倣する", category: "4. 社会心理学", related: "関連: imitation（模倣）、Bandura（バンデューラ）" },
+        { english: "isolation", japanese: "孤立", category: "4. 社会心理学", related: "関連: social isolation（社会的孤立）" },
+
+        // ==================== 5. 感覚・知覚・認知心理学 ====================
+        { english: "memory", japanese: "記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: Ebbinghaus（エビングハウス）、memorize" },
+        { english: "sense", japanese: "感覚、意味", category: "5. 感覚・知覚・認知心理学", related: "関連: five major senses（五感）" },
+        { english: "cognitive", japanese: "認知的な、認知の", category: "5. 感覚・知覚・認知心理学", related: "関連: cognition（認知）" },
+        { english: "task", japanese: "課題", category: "5. 感覚・知覚・認知心理学", related: "関連: laboratory tasks（実験室課題）" },
+        { english: "recognition", japanese: "再認、認識", category: "5. 感覚・知覚・認知心理学", related: "関連: recognition memory test（再認記憶テスト）" },
+        { english: "thought", japanese: "思考", category: "5. 感覚・知覚・認知心理学", related: "関連: think（考える）" },
+        { english: "attention", japanese: "注意", category: "5. 感覚・知覚・認知心理学", related: "関連: attend（注意する）" },
+        { english: "concept", japanese: "概念、考え", category: "5. 感覚・知覚・認知心理学", related: "関連: Alfred Binet（アルフレッド・ビネー）" },
+        { english: "perception", japanese: "知覚", category: "5. 感覚・知覚・認知心理学", related: "関連: perceptual（知覚の）" },
+        { english: "figure", japanese: "図、人物、数字", category: "5. 感覚・知覚・認知心理学", related: "関連: figure and ground（図と地）" },
+        { english: "remember", japanese: "記憶する、思い出す、想起する", category: "5. 感覚・知覚・認知心理学", related: "関連: memory" },
+        { english: "depth", japanese: "奥行き、深さ", category: "5. 感覚・知覚・認知心理学", related: "関連: depth cues（奥行きの手がかり）" },
+        { english: "image", japanese: "イメージ、像", category: "5. 感覚・知覚・認知心理学", related: "関連: imagery（心像）" },
+        { english: "recall", japanese: "再生する、思い出す", category: "5. 感覚・知覚・認知心理学", related: "関連: psychological stress" },
+        { english: "nonverbal", japanese: "非言語的な", category: "5. 感覚・知覚・認知心理学", related: "関連: nonverbal messages（非言語的メッセージ）" },
+        { english: "auditory", japanese: "聴覚的な、聴覚の", category: "5. 感覚・知覚・認知心理学", related: "関連: auditory information（聴覚情報）" },
+        { english: "sensory", japanese: "感覚の、知覚の", category: "5. 感覚・知覚・認知心理学", related: "関連: sensory memory（感覚記憶）" },
+        { english: "inhibition", japanese: "抑制、禁止", category: "5. 感覚・知覚・認知心理学", related: "関連: retroactive inhibition（後方抑制）" },
+        { english: "duration", japanese: "持続期間、期間", category: "5. 感覚・知覚・認知心理学", related: "関連: short-term memories" },
+        { english: "facial expression", japanese: "表情", category: "5. 感覚・知覚・認知心理学", related: "関連: universal facial expressions" },
+        { english: "vision", japanese: "視覚、先見性、空想", category: "5. 感覚・知覚・認知心理学", related: "関連: visual perception（視覚知覚）" },
+        { english: "adaptation", japanese: "順応、適応", category: "5. 感覚・知覚・認知心理学", related: "関連: dark adaptation（暗順応）" },
+        { english: "forgetting", japanese: "忘れる、忘却する", category: "5. 感覚・知覚・認知心理学", related: "関連: interference theory（干渉説）" },
+        { english: "implicit", japanese: "潜在的な", category: "5. 感覚・知覚・認知心理学", related: "関連: implicit memory（潜在記憶）" },
+        { english: "linguistic", japanese: "言語的な、言語学の", category: "5. 感覚・知覚・認知心理学", related: "関連: Chomsky（チョムスキー）、generative grammar" },
+        { english: "representation", japanese: "表象、表現、代表", category: "5. 感覚・知覚・認知心理学", related: "関連: psychic representation（心理的表象）" },
+        { english: "sensation", japanese: "感覚、感じ", category: "5. 感覚・知覚・認知心理学", related: "関連: Gestalt psychology（ゲシュタルト心理学）" },
+        { english: "short-term memory", japanese: "短期記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: long-term memory（長期記憶）" },
+        { english: "explicit", japanese: "顕在的な", category: "5. 感覚・知覚・認知心理学", related: "関連: explicit memory（顕在記憶）" },
+        { english: "face recognition", japanese: "顔認識", category: "5. 感覚・知覚・認知心理学", related: "関連: left hemisphere（左半球）" },
+        { english: "induction", japanese: "帰納法", category: "5. 感覚・知覚・認知心理学", related: "関連: Karl Popper（カール・ポパー）" },
+        { english: "rehearsal", japanese: "リハーサル", category: "5. 感覚・知覚・認知心理学", related: "関連: maintenance/elaborative rehearsal" },
+        { english: "retrieve", japanese: "検索する、思い出す", category: "5. 感覚・知覚・認知心理学", related: "関連: retrieval（検索）" },
+        { english: "store", japanese: "貯蔵する", category: "5. 感覚・知覚・認知心理学", related: "関連: storage（貯蔵）" },
+        { english: "analogy", japanese: "類推、アナロジー", category: "5. 感覚・知覚・認知心理学", related: "関連: unfamiliar problems" },
+        { english: "long-term memory", japanese: "長期記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: memory processes" },
+        { english: "visual field", japanese: "視野", category: "5. 感覚・知覚・認知心理学", related: "関連: verbal stimuli（言語刺激）" },
+        { english: "autobiographical", japanese: "自伝的な、自伝の", category: "5. 感覚・知覚・認知心理学", related: "関連: autobiographical memory（自伝的記憶）" },
+        { english: "information processing", japanese: "情報処理", category: "5. 感覚・知覚・認知心理学", related: "関連: cognitive psychology（認知心理学）" },
+        { english: "mental image", japanese: "心的イメージ", category: "5. 感覚・知覚・認知心理学", related: "関連: young children" },
+        { english: "module", japanese: "モジュール", category: "5. 感覚・知覚・認知心理学", related: "関連: Steven Pinker（スティーブン・ピンカー）" },
+        { english: "optical", japanese: "視覚の、光学の", category: "5. 感覚・知覚・認知心理学", related: "関連: optical illusions（錯視）" },
+        { english: "priming", japanese: "プライミング", category: "5. 感覚・知覚・認知心理学", related: "関連: priming effects（プライミング効果）" },
+        { english: "proactive", japanese: "順向性の、逆方向の", category: "5. 感覚・知覚・認知心理学", related: "関連: proactive inhibition（順向抑制）" },
+        { english: "retina", japanese: "網膜", category: "5. 感覚・知覚・認知心理学", related: "関連: retinal image（網膜像）" },
+        { english: "retinal image", japanese: "網膜像", category: "5. 感覚・知覚・認知心理学", related: "関連: object approaches" },
+        { english: "working memory", japanese: "ワーキングメモリー、作業記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: central executive（中央実行系）" },
+        { english: "configuration", japanese: "布置、配置", category: "5. 感覚・知覚・認知心理学", related: "関連: face perception（顔知覚）" },
+        { english: "eye movement", japanese: "眼球運動", category: "5. 感覚・知覚・認知心理学", related: "関連: studies of eye movement" },
+        { english: "intuition", japanese: "直観、直観の", category: "5. 感覚・知覚・認知心理学", related: "関連: experts（専門家）" },
+        { english: "recollection", japanese: "回想、思い出し", category: "5. 感覚・知覚・認知心理学", related: "関連: therapy-induced false recollections" },
+        { english: "threshold", japanese: "閾、閾値", category: "5. 感覚・知覚・認知心理学", related: "関連: Fechner（フェヒナー）、psychophysical methods" },
+        { english: "witness", japanese: "目撃者、証人、証拠", category: "5. 感覚・知覚・認知心理学", related: "関連: leading questions（誘導尋問）" },
+        { english: "algorithm", japanese: "アルゴリズム", category: "5. 感覚・知覚・認知心理学", related: "関連: heuristics（ヒューリスティックス）" },
+        { english: "apparent movement", japanese: "仮現運動", category: "5. 感覚・知覚・認知心理学", related: "関連: phi phenomenon（ファイ現象）" },
+        { english: "binocular", japanese: "両眼の、両眼性の", category: "5. 感覚・知覚・認知心理学", related: "関連: binocular depth cues" },
+        { english: "binocular disparity", japanese: "両眼視差", category: "5. 感覚・知覚・認知心理学", related: "関連: depth perception（奥行き知覚）" },
+        { english: "cognitive map", japanese: "認知地図", category: "5. 感覚・知覚・認知心理学", related: "関連: Tolman（トールマン）" },
+        { english: "cone", japanese: "錐体", category: "5. 感覚・知覚・認知心理学", related: "関連: retina（網膜）、detecting color（色彩検出）" },
+        { english: "declarative memory", japanese: "宣言的記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: non-declarative memory（非宣言的記憶）" },
+        { english: "deduction", japanese: "演繹法", category: "5. 感覚・知覚・認知心理学", related: "関連: Wason's four-card problem" },
+        { english: "divergent thinking", japanese: "拡散的思考", category: "5. 感覚・知覚・認知心理学", related: "関連: convergent thinking（収束的思考）、creativity" },
+        { english: "elaboration", japanese: "精緻化", category: "5. 感覚・知覚・認知心理学", related: "関連: elaborative rehearsal（精緻化リハーサル）" },
+        { english: "encode", japanese: "符号化する", category: "5. 感覚・知覚・認知心理学", related: "関連: encoding（符号化）" },
+        { english: "episodic memory", japanese: "エピソード記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: semantic memory（意味記憶）" },
+        { english: "false memory", japanese: "偽りの記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: Loftus（ロフタス）、eyewitness testimony" },
+        { english: "Gestalt psychology", japanese: "ゲシュタルト心理学", category: "5. 感覚・知覚・認知心理学", related: "関連: Wertheimer（ヴェルトハイマー）" },
+        { english: "heuristics", japanese: "ヒューリスティックス", category: "5. 感覚・知覚・認知心理学", related: "関連: algorithm（アルゴリズム）" },
+        { english: "just noticeable difference", japanese: "丁度可知差（JND）", category: "5. 感覚・知覚・認知心理学", related: "関連: Weber's law（ウェーバーの法則）" },
+        { english: "levels of processing", japanese: "処理水準", category: "5. 感覚・知覚・認知心理学", related: "関連: Craik & Lockhart（クレイク＆ロックハート）" },
+        { english: "mental rotation", japanese: "心の回転、心的回転", category: "5. 感覚・知覚・認知心理学", related: "関連: Shepard & Metzler" },
+        { english: "metacognition", japanese: "メタ認知", category: "5. 感覚・知覚・認知心理学", related: "関連: Flavell（フラベル）" },
+        { english: "monocular", japanese: "単眼の、単眼性の", category: "5. 感覚・知覚・認知心理学", related: "関連: binocular（両眼の）" },
+        { english: "nonsense syllable", japanese: "無意味つづり", category: "5. 感覚・知覚・認知心理学", related: "関連: Ebbinghaus（エビングハウス）" },
+        { english: "perceptual-motor skill", japanese: "知覚運動スキル", category: "5. 感覚・知覚・認知心理学", related: "関連: motor coordination" },
+        { english: "point of subjective equality", japanese: "主観的等価点（PSE）", category: "5. 感覚・知覚・認知心理学", related: "関連: psychophysics（精神物理学）" },
+        { english: "procedural memory", japanese: "手続き記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: non-declarative memory（非宣言的記憶）" },
+        { english: "prospective memory", japanese: "展望記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: retrospective memory（回想的記憶）" },
+        { english: "prototype", japanese: "プロトタイプ", category: "5. 感覚・知覚・認知心理学", related: "関連: Rosch（ロッシュ）、categorization" },
+        { english: "psychophysics", japanese: "精神物理学", category: "5. 感覚・知覚・認知心理学", related: "関連: Fechner（フェヒナー）" },
+        { english: "reconstruct", japanese: "再構築する、再構想する", category: "5. 感覚・知覚・認知心理学", related: "関連: Bartlett（バートレット）" },
+        { english: "rod", japanese: "桿体", category: "5. 感覚・知覚・認知心理学", related: "関連: cone（錐体）、night vision" },
+        { english: "saccade", japanese: "サッカード", category: "5. 感覚・知覚・認知心理学", related: "関連: eye movements（眼球運動）" },
+        { english: "selective attention", japanese: "選択的注意", category: "5. 感覚・知覚・認知心理学", related: "関連: Broadbent（ブロードベント）、cocktail party effect" },
+        { english: "semantic memory", japanese: "意味記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: episodic memory（エピソード記憶）" },
+        { english: "sensory memory", japanese: "感覚記憶", category: "5. 感覚・知覚・認知心理学", related: "関連: Sperling（スパーリング）、iconic/echoic" },
+        { english: "size constancy", japanese: "大きさの恒常性", category: "5. 感覚・知覚・認知心理学", related: "関連: perceptual constancy（知覚の恒常性）" },
+        { english: "affordance", japanese: "アフォーダンス", category: "5. 感覚・知覚・認知心理学", related: "関連: Gibson（ギブソン）" },
+        { english: "autokinetic movement", japanese: "自動運動", category: "5. 感覚・知覚・認知心理学", related: "関連: Sherif（シェリフ）" },
+        { english: "distal stimulus", japanese: "遠刺激", category: "5. 感覚・知覚・認知心理学", related: "関連: proximal stimulus（近刺激）" },
+        { english: "forgetting curve", japanese: "忘却曲線", category: "5. 感覚・知覚・認知心理学", related: "関連: Ebbinghaus（エビングハウス）" },
+        { english: "functional fixedness", japanese: "機能的固定", category: "5. 感覚・知覚・認知心理学", related: "関連: Duncker（ダンカー）、problem solving" },
+        { english: "grouping", japanese: "群化", category: "5. 感覚・知覚・認知心理学", related: "関連: Gestalt principles（ゲシュタルト法則）" },
+        { english: "induced motion", japanese: "誘導運動", category: "5. 感覚・知覚・認知心理学", related: "関連: Duncker（ダンカー）" },
+        { english: "motion after effect", japanese: "運動残効", category: "5. 感覚・知覚・認知心理学", related: "関連: waterfall illusion（滝の錯視）" },
+        { english: "pattern recognition", japanese: "パターン認知", category: "5. 感覚・知覚・認知心理学", related: "関連: feature detection（特徴検出）" },
+        { english: "perceptual constancy", japanese: "知覚の恒常性", category: "5. 感覚・知覚・認知心理学", related: "関連: size, shape, color constancy" },
+        { english: "proximal stimulus", japanese: "近刺激", category: "5. 感覚・知覚・認知心理学", related: "関連: distal stimulus（遠刺激）" },
+        { english: "subjective contour", japanese: "主観的輪郭", category: "5. 感覚・知覚・認知心理学", related: "関連: Kanizsa triangle（カニッツァの三角形）" },
+    { english: "social learning theory", japanese: "社会的学習理論", category: "6. 学習心理学", related: "関連: Bandura（バンドゥーラ）、observation" },
+    { english: "spontaneous recovery", japanese: "自発的回復", category: "6. 学習心理学", related: "関連: Pavlov（パブロフ）、extinction（消去）" },
+    { english: "trial and error", japanese: "試行錯誤", category: "6. 学習心理学", related: "関連: Thorndike（ソーンダイク）、puzzle box" },
+    { english: "continuous reinforcement", japanese: "連続強化", category: "6. 学習心理学", related: "関連: reinforcement schedule（強化スケジュール）" },
+    { english: "early learning", japanese: "初期学習", category: "6. 学習心理学", related: "関連: cognitive development（認知発達）" },
+    { english: "experimental neurosis", japanese: "実験神経症", category: "6. 学習心理学", related: "関連: Thorndike、difficult discrimination tasks" },
+    { english: "law of effect", japanese: "効果の法則", category: "6. 学習心理学", related: "関連: Thorndike（ソーンダイク）、reward" },
+    { english: "learned helplessness", japanese: "学習性無力感", category: "6. 学習心理学", related: "関連: Seligman（セリグマン）、depression" },
+    { english: "learning set", japanese: "学習の構え", category: "6. 学習心理学", related: "関連: Harlow（ハーロウ）、learning to learn" },
+    { english: "omission training", japanese: "オミッション訓練", category: "6. 学習心理学", related: "関連: operant conditioning（オペラント条件づけ）" },
+    { english: "operant level", japanese: "オペラント水準", category: "6. 学習心理学", related: "関連: baseline frequency of actions" },
+    { english: "schedule of reinforcement", japanese: "強化スケジュール", category: "6. 学習心理学", related: "関連: operant conditioning、reinforcer" },
+    { english: "taxis", japanese: "走性", category: "6. 学習心理学", related: "関連: innate behaviors（生得的行動）" },
+    { english: "operant conditioning", japanese: "オペラント条件づけ", category: "6. 学習心理学", related: "関連: Skinner（スキナー）、instrumental conditioning" },
+    { english: "Premack principle", japanese: "プレマックの法則", category: "6. 学習心理学", related: "関連: reinforcement, procrastination" },
+    { english: "punishment", japanese: "罰、罰すること", category: "6. 学習心理学", related: "関連: child education、positive/negative punishment" },
+    { english: "reward", japanese: "報酬", category: "6. 学習心理学", related: "関連: maze running、rat experiment" },
+    { english: "vicariously", japanese: "代理的に", category: "6. 学習心理学", related: "関連: social learning theory（社会的学習理論）" },
+    { english: "advance organizer", japanese: "先行オーガナイザー", category: "6. 学習心理学", related: "関連: Ausubel（オーズベル）、knowledge acquisition" },
+    { english: "Aptitude Treatment Interaction / ATI", japanese: "適性処遇交互作用", category: "6. 学習心理学", related: "関連: language teaching（言語教授法）" },
+    { english: "contingency", japanese: "随伴性", category: "6. 学習心理学", related: "関連: CS-US contingency、Rescorla" },
+    { english: "differentiation", japanese: "分化", category: "6. 学習心理学", related: "関連: experimental neurosis（実験神経症）" },
+    { english: "intermittent reinforcement", japanese: "間歇強化", category: "6. 学習心理学", related: "関連: resistance to extinction（消去に対する抵抗）" },
+    { english: "latent learning", japanese: "潜在学習", category: "6. 学習心理学", related: "関連: Tolman（トールマン）、reward" },
+    { english: "release", japanese: "解発する、開放", category: "6. 学習心理学", related: "関連: Tinbergen（ティンバーゲン）、innate behavior" },
+    { english: "shaping", japanese: "シェイピング、行動形成", category: "6. 学習心理学", related: "関連: operant conditioning、target behavior" },
+    { english: "aversive", japanese: "嫌悪的な、嫌悪の", category: "6. 学習心理学", related: "関連: aversion therapy（嫌悪療法）" },
+    { english: "transfer", japanese: "転移、学習の転移", category: "6. 学習心理学", related: "関連: escape and avoidance learning" },
+    { english: "escape", japanese: "逃避、逃げる", category: "6. 学習心理学", related: "関連: avoidance learning（回避学習）" },
+    { english: "induce", japanese: "誘導する、引き起こす", category: "6. 学習心理学", related: "関連: frustration aggression hypothesis" },
+    { english: "discrimination", japanese: "弁別", category: "6. 学習心理学", related: "関連: stimulus generalization（刺激汎化）" },
+    { english: "praise", japanese: "称賛、ほめること", category: "6. 学習心理学", related: "関連: motivating students（生徒の動機づけ）" },
+    { english: "negative reinforcement", japanese: "負の強化", category: "6. 学習心理学", related: "関連: removal of aversive stimulus" },
+    { english: "positive reinforcement", japanese: "正の強化", category: "6. 学習心理学", related: "関連: presentation of rewarding stimulus" },
+    { english: "unconditioned", japanese: "無条件の", category: "6. 学習心理学", related: "関連: Pavlov's experiment、meat powder" },
+    { english: "reinforcer", japanese: "強化子", category: "6. 学習心理学", related: "関連: positive/negative reinforcer" },
+    { english: "extinction", japanese: "消去", category: "6. 学習心理学", related: "関連: absence of US、repeated presentation" },
+    { english: "generalize", japanese: "一般化、一般化する", category: "6. 学習心理学", related: "関連: stimulus generalization" },
+    { english: "instrumental conditioning", japanese: "道具的条件づけ", category: "6. 学習心理学", related: "関連: operant conditioning（オペラント条件づけ）" },
+    { english: "behavior", japanese: "行動", category: "6. 学習心理学", related: "関連: behaviorism（行動主義）、stimulus-response" },
+    { english: "learn", japanese: "学習する、学ぶ", category: "6. 学習心理学", related: "関連: infant learning、comprehend the world" },
+    { english: "model", japanese: "モデル、見本、模範", category: "6. 学習心理学", related: "関連: modeling（モデリング）、Bandura" },
+    { english: "avoidance", japanese: "回避", category: "6. 学習心理学", related: "関連: shuttle box、escape and avoidance" },
+    { english: "stimulus", japanese: "刺激", category: "6. 学習心理学", related: "関連: stimulus-response relationship" },
+    { english: "reinforcement", japanese: "強化", category: "6. 学習心理学", related: "関連: reinforce（強化する）、probability of behavior" },
+    { english: "insight", japanese: "洞察", category: "6. 学習心理学", related: "関連: Köhler（ケーラー）、chimpanzee" },
+    { english: "conditioned", japanese: "条件付けられた、条件の", category: "6. 学習心理学", related: "関連: conditioned fear、extinction" },
+    { english: "organism", japanese: "有機体、生物", category: "6. 学習心理学", related: "関連: survival of organisms" },
+    { english: "behaviorism", japanese: "行動主義", category: "6. 学習心理学", related: "関連: observable behavior、Watson" },
+    { english: "elicit", japanese: "誘発する、引き出す", category: "6. 学習心理学", related: "関連: salivation of the dog" },
+    { english: "event-related potential", japanese: "事象関連電位 (ERP)", category: "7. 生理・神経心理学", related: "関連: brain, emotion" },
+    { english: "frontal lobe", japanese: "前頭葉", category: "7. 生理・神経心理学", related: "関連: controls emotion, homeostasis" },
+    { english: "hypothalamus", japanese: "視床下部", category: "7. 生理・神経心理学", related: "関連: homeostasis, male/female brain" },
+    { english: "lateralize", japanese: "側性化する", category: "7. 生理・神経心理学", related: "関連: thinking skills, male/female brain" },
+    { english: "neuron", japanese: "ニューロン", category: "7. 生理・神経心理学", related: "関連: eye afterimages, stimulus" },
+    { english: "occipital lobe", japanese: "後頭葉", category: "7. 生理・神経心理学", related: "関連: vision and color recognition" },
+    { english: "parasympathetic nervous system", japanese: "副交感神経系 (PNS)", category: "7. 生理・神経心理学", related: "関連: heart rate, blood pressure" },
+    { english: "parietal lobe", japanese: "頭頂葉", category: "7. 生理・神経心理学", related: "関連: sensory information, temperature"  },
+    { english: "peripheral", japanese: "末梢の、周辺の", category: "7. 生理・神経心理学", related: "関連: peripheral nervous system"  },
+    { english: "split brain", japanese: "分離脳", category: "7. 生理・神経心理学", related: "関連: brain hemispheres function"  },
+    { english: "sympathetic nervous system", japanese: "交感神経系 (SNS)", category: "7. 生理・神経心理学", related: "関連: fight-or-flight response"  },
+    { english: "thalamus", japanese: "視床", category: "7. 生理・神経心理学", related: "関連: sensory area in the cortex"  },
+    { english: "ulcer", japanese: "潰瘍", category: "7. 生理・神経心理学", related: "関連: rats exposed to stress"  },
+    { english: "neuroimaging", japanese: "ニューロイメージング、神経画像", category: "7. 生理・神経心理学", related: "関連: damage to the brain, neuroscience" },
+    { english: "neuroscience", japanese: "神経科学", category: "7. 生理・神経心理学", related: "関連: depression, neurotransmitters" },
+    { english: "neurotransmitter", japanese: "神経伝達物質", category: "7. 生理・神経心理学", related: "関連: anxiety, relaxation" },
+    { english: "organ", japanese: "器官、臓器", category: "7. 生理・神経心理学", related: "関連: breathing, brain plasticity" },
+    { english: "plasticity", japanese: "可塑性、柔軟性", category: "7. 生理・神経心理学", related: "関連: PET, fMRI, brain insights" },
+    { english: "prefrontal cortex", japanese: "前頭前野、前頭前頭皮質", category: "7. 生理・神経心理学", related: "関連: cognitive analysis, social behavior" },
+    { english: "side effect", japanese: "副作用", category: "7. 生理・神経心理学", related: "関連: medication, verbal skills" },
+    { english: "temporal lobe", japanese: "側頭葉", category: "7. 生理・神経心理学", related: "関連: left temporal lobe, verbal skills" },
+    { english: "action potential", japanese: "活動電位", category: "7. 生理・神経心理学", related: "関連: membrane potential change" },
+    { english: "amnesia", japanese: "健忘症", category: "7. 生理・神経心理学", related: "関連: retrograde amnesia, brain injury" },
+    { english: "corpus callosum", japanese: "脳梁", category: "7. 生理・神経心理学", related: "関連: human brain size and shape" },
+    { english: "DNA", japanese: "DNA", category: "7. 生理・神経心理学", related: "関連: double helix structure" },
+    { english: "electroencephalogram", japanese: "脳波 (EEG)", category: "7. 生理・神経心理学", related: "関連: electrical activity of the brain" },
+    { english: "neurological", japanese: "神経学的な、神経学の", category: "7. 生理・神経心理学", related: "関連: surgical treatment, symptoms" },
+    { english: "cell", japanese: "細胞", category: "7. 生理・神経心理学", related: "関連: natural killer cells, cancer cells" },
+    { english: "cerebral cortex", japanese: "大脳皮質", category: "7. 生理・神経心理学", related: "関連: meditation, daily practice" },
+    { english: "disability", japanese: "障害", category: "7. 生理・神経心理学", related: "関連: learning the meaning of numbers" },
+    { english: "fight-or-flight response", japanese: "緊急反応、闘争逃走反応", category: "7. 生理・神経心理学", related: "関連: bear in a forest, encounter" },
+    { english: "hippocampus", japanese: "海馬", category: "7. 生理・神経心理学", related: "関連: autobiographical memories" },
+    { english: "nervous system", japanese: "神経系", category: "7. 生理・神経心理学", related: "関連: central nervous system, damage" },
+    { english: "neuropsychology", japanese: "神経心理学", category: "7. 生理・神経心理学", related: "関連: psychological functions, patients" },
+    { english: "placebo", japanese: "プラセボ (プラシーボ)", category: "7. 生理・神経心理学", related: "関連: placebo effect, health improvement" },
+    { english: "serotonin", japanese: "セロトニン", category: "7. 生理・神経心理学", related: "関連: neurotransmitter, joy and happiness" },
+    { english: "tissue", japanese: "組織", category: "7. 生理・神経心理学", related: "関連: neural tissue, facial expressions" },
+    { english: "amygdala", japanese: "扁桃体、扁桃核", category: "7. 生理・神経心理学", related: "関連: processing facial expressions" },
+    { english: "dopamine", japanese: "ドーパミン", category: "7. 生理・神経心理学", related: "関連: teen brain, sensitive activities" },
+    { english: "brain", japanese: "脳", category: "7. 生理・神経心理学", related: "関連: 10% myth, neuroscience" },
+    { english: "arousal", japanese: "覚醒、興奮", category: "7. 生理・神経心理学", related: "関連: Yerkes-Dodson Law, performance" },
+    { english: "genetic", japanese: "遺伝(学)的な", category: "7. 生理・神経心理学", related: "関連: genetic factors, intelligence" },
+    { english: "neural", japanese: "神経の", category: "7. 生理・神経心理学", related: "関連: neural connections, injury" },
+    { english: "physiological", japanese: "生理(学)的な", category: "7. 生理・神経心理学", related: "関連: physiological psychology, behavior" },
+    { english: "blood pressure", japanese: "血圧", category: "7. 生理・神経心理学", related: "関連: hostility, physiological research" },
+    { english: "hemisphere", japanese: "半球", category: "7. 生理・神経心理学", related: "関連: left and right brain function" },
+    { english: "biology", japanese: "生物学", category: "7. 生理・神経心理学", related: "関連: evolutionary biology" },
+    { english: "cortex", japanese: "皮質", category: "7. 生理・神経心理学", related: "関連: association cortex, language" },
+    { english: "cardiovascular", japanese: "心臓血管(系)の", category: "7. 生理・神経心理学", related: "関連: positive emotions, laughter" },
+    { english: "immune", japanese: "免疫のある、免疫の", category: "7. 生理・神経心理学", related: "関連: immune system, chronic stress" },
+    { english: "triarchic theory", japanese: "三立理論", category: "8. 性格・知能", related: "関連: Sternberg（スタンバーグ)" },
+    { english: "two-factor theory", japanese: "2因子理論", category: "8. 性格・知能", related: "関連: Spearman（スピアマン)" },
+    { english: "typology", japanese: "類型論", category: "8. 性格・知能", related: "関連: personality typology" },
+    { english: "deviation IQ", japanese: "偏差IQ (DIQ)", category: "8. 性格・知能", related: "関連: Wechsler（ウェクスラー" },
+    { english: "academic achievement", japanese: "学力", category: "8. 性格・知能", related: "関連: achievement quotient（成就指数" },
+    { english: "achievement quotient", japanese: "成就指数", category: "8. 性格・知能", related: "関連: intelligence quotient" },
+    { english: "agreeableness", japanese: "同調性、協調性", category: "8. 性格・知能", related: "関連: Big Five（ビッグファイ" },
+    { english: "conscientiousness", japanese: "誠実性", category: "8. 性格・知能", related: "関連: Big Five" },
+    { english: "lie scale", japanese: "虚偽尺度", category: "8. 性格・知能", related: "関連: MMPI" },
+    { english: "openness", japanese: "開放性", category: "8. 性格・知能", related: "関連: Big Five" },
+    { english: "social desirability", japanese: "社会的望ましさ", category: "8. 性格・知能", related: "関連: achievement motivation" },
+    { english: "Thematic Apperception Test", japanese: "主題統覚検査 (TAT)", category: "8. 性格・知能", related: "関連: achievement motivation" },
+    { english: "type A behavior pattern", japanese: "タイプA行動パターン", category: "8. 性格・知能", related: "関連: coronary heart disease" },
+    { english: "extraversion", japanese: "外向性", category: "8. 性格・知能", related: "関連: introversion（内向性）、anxiety" },
+    { english: "fluid intelligence", japanese: "流動性知能", category: "8. 性格・知能", related: "関連: crystallized intelligence（結晶性知能）" },
+    { english: "idiographic", japanese: "個性記述的", category: "8. 性格・知能", related: "関連: nomothetic（法則定立的)" },
+    { english: "intelligence quotient", japanese: "知能指数 (IQ)", category: "8. 性格・知能", related: "関連: Flynn effect（フリン効果)" },
+    { english: "introversion", japanese: "内向性", category: "8. 性格・知能", related: "関連: extraversion（外向性)" },
+    { english: "nomothetic", japanese: "法則定立的", category: "8. 性格・知能", related: "関連: idiographic（個性記述的)" },
+    { english: "optimist", japanese: "楽観主義者", category: "8. 性格・知能", related: "関連: pessimistic（悲観的な)" },
+    { english: "performance test", japanese: "作業検査法", category: "8. 性格・知能", related: "関連: Uchida-Kraepelin test" },
+    { english: "Picture Frustration Study", japanese: "P-Fスタディ (絵画欲求不満テスト)", category: "8. 性格・知能", related: "関連: anger expression" },
+    { english: "projective technique", japanese: "投影法", category: "8. 性格・知能", related: "関連: unstructured stimuli" },
+    { english: "sentence completion test", japanese: "文章完成法テスト (SCT)", category: "8. 性格・知能", related: "関連: clinical practitioners" },
+    { english: "theory of multiple intelligences", japanese: "多重知能理論", category: "8. 性格・知能", related: "関連: Howard Gardner（ガードナー)" },
+    { english: "trait theory", japanese: "特性論", category: "8. 性格・知能", related: "関連: personality traits" },
+    { english: "personality test", japanese: "パーソナリティテスト", category: "8. 性格・知能", related: "関連: questionnaire" },
+    { english: "pessimistic", japanese: "悲観的な", category: "8. 性格・知能", related: "関連: optimistic（楽観的な）" },
+    { english: "predisposition", japanese: "素質、傾向", category: "8. 性格・知能", related: "関連: aggressive behavior" },
+    { english: "trait", japanese: "特性", category: "8. 性格・知能", related: "関連: personality traits" },
+    { english: "general intelligence", japanese: "一般知能", category: "8. 性格・知能", related: "関連: Spearman、g factor" },
+    { english: "self-efficacy", japanese: "自己効力感", category: "8. 性格・知能", related: "関連: intelligence level" },
+    { english: "intelligence test", japanese: "知能テスト", category: "8. 性格・知能", related: "関連: client's intelligence level" },
+    { english: "perfectionism", japanese: "完璧主義", category: "8. 性格・知能", related: "関連: anorexia nervosa" },
+    { english: "self-confidence", japanese: "自信", category: "8. 性格・知能", related: "関連: susceptibility to shame" },
+    { english: "authoritarian personality", japanese: "権威主義的パーソナリティ", category: "8. 性格・知能", related: "関連: Adorno" },
+    { english: "Big Five", japanese: "ビッグファイブ", category: "8. 性格・知能", related: "関連: extraversion, neuroticism" },
+    { english: "convergent thinking", japanese: "収束的思考", category: "8. 性格・知能", related: "関連: divergent thinking（拡散的思考）" },
+    { english: "crystallized intelligence", japanese: "結晶性知能", category: "8. 性格・知能", related: "関連: fluid intelligence（流動性知能）" },
+    { english: "personality", japanese: "パーソナリティ", category: "8. 性格・知能", related: "関連: psychotherapy" },
+    { english: "intelligence", japanese: "知能", category: "8. 性格・知能", related: "関連: social success" },
+    { english: "self-esteem", japanese: "自尊感情、自尊心", category: "8. 性格・知能", related: "関連: narcissism" },
+    { english: "character", japanese: "性格", category: "8. 性格・知能", related: "関連: personality" },
+    { english: "intellectual", japanese: "知的な、知性の", category: "8. 性格・知能", related: "関連: define the soul" },
+    { english: "chronological age", japanese: "生活年齢、暦年齢", category: "8. 性格・知能", related: "関連: mental age（精神年齢）" },
+    { english: "factor", japanese: "要因、因子", category: "8. 性格・知能", related: "関連: environmental factors" },
+    { english: "individual differences", japanese: "個人差", category: "8. 性格・知能", related: "関連: attachment patterns" },
+    { english: "mental age", japanese: "精神年齢", category: "8. 性格・知能", related: "関連: Binet, IQ calculation" },
+    { english: "self-concept", japanese: "自己概念", category: "8. 性格・知能", related: "関連: interaction with others" },
+    { english: "confidence", japanese: "自信、確信", category: "8. 性格・知能", related: "関連: achieving goals" },
+    { english: "primary need", japanese: "一次的欲求", category: "9. 動機づけ・感情心理学", related: "関連: biological needs, water, food, oxygen" },
+    { english: "secondary need", japanese: "二次的欲求", category: "9. 動機づけ・感情心理学", related: "関連: H. Murray, psychological demands" },
+    { english: "undermining effect", japanese: "アンダーマイニング効果", category: "9. 動機づけ・感情心理学", related: "関連: intrinsic motivation, extinction" },
+    { english: "basic emotions", japanese: "基本感情", category: "9. 動機づけ・感情心理学", related: "関連: Plutchik's 8 basic emotions" },
+    { english: "contempt", japanese: "軽蔑", category: "9. 動機づけ・感情心理学", related: "関連: feel contempt toward people" },
+    { english: "deficiency needs", japanese: "欠乏欲求", category: "9. 動機づけ・感情心理学", related: "関連: Maslow's theory, four lowest needs" },
+    { english: "detour behavior", japanese: "迂動行動", category: "9. 動機づけ・感情心理学", related: "関連: frustration responses" },
+    { english: "display rule", japanese: "表示規則", category: "9. 動機づけ・感情心理学", related: "関連: Ekman, cultures" },
+    { english: "emotion regulation", japanese: "情動制御", category: "9. 動機づけ・感情心理学", related: "関連: psychological health" },
+    { english: "euphoria", japanese: "多幸感", category: "9. 動機づけ・感情心理学", related: "関連: right hemisphere damage" },
+    { english: "growth needs", japanese: "成長欲求", category: "9. 動機づけ・感情心理学", related: "関連: Maslow, self-actualization" },
+    { english: "motive to avoid success", japanese: "成功回避動機", category: "9. 動機づけ・感情心理学", related: "関連: Horner, competitive situation" },
+    { english: "Yerkes-Dodson's law", japanese: "ヤーキーズ・ドットソンの法則", category: "9. 動機づけ・感情心理学", related: "関連: eyewitness memory" },
+    { english: "hyperarousal", japanese: "過覚醒", category: "9. 動機づけ・感情心理学", related: "関連: Yerkes-Dodson's law, low level of motivation" },
+    { english: "intrinsic", japanese: "内発的な、固有の", category: "9. 動機づけ・感情心理学", related: "関連: extrinsic, intrinsic motivation" },
+    { english: "unpleasant", japanese: "不快な", category: "9. 動機づけ・感情心理学", related: "関連: unpleasant emotional experience" },
+    { english: "hierarchy", japanese: "階層", category: "9. 動機づけ・感情心理学", related: "関連: Maslow's hierarchy of needs" },
+    { english: "malicious", japanese: "悪意のある、意地悪い", category: "9. 動機づけ・感情心理学", related: "関連: malicious pleasant, education" },
+    { english: "pleasant", japanese: "楽しい、快い", category: "9. 動機づけ・感情心理学", related: "関連: pleasant experiences, sentiment" },
+    { english: "sentiment", japanese: "情操、感情", category: "9. 動機づけ・感情心理学", related: "関連: appropriate sentiment" },
+    { english: "achievement motivation", japanese: "達成動機づけ", category: "9. 動機づけ・感情心理学", related: "関連: academic success" },
+    { english: "affiliation motivation", japanese: "親和動機づけ", category: "9. 動機づけ・感情心理学", related: "関連: warm relationships, acceptance" },
+    { english: "Cannon-Bard theory", japanese: "キャノン・バード説", category: "9. 動機づけ・感情心理学", related: "関連: James-Lange theory, thalamus" },
+    { english: "functional autonomy", japanese: "機能的自律性", category: "9. 動機づけ・感情心理学", related: "関連: current actions, early childhood motivation" },
+    { english: "homeostasis", japanese: "ホメオスタシス", category: "9. 動機づけ・感情心理学", related: "関連: appropriate balance in the body" },
+    { english: "James-Lange theory", japanese: "ジェームズ・ランゲ説", category: "9. 動機づけ・感情心理学", related: "関連: physiological reactions to events" },
+    { english: "guilt", japanese: "罪悪感、罪", category: "9. 動機づけ・感情心理学", related: "関連: terror management theory, postpartum period" },
+    { english: "terror", japanese: "恐怖、脅威", category: "9. 動機づけ・感情心理学", related: "関連: terror management theory, mortality" },
+    { english: "motivation", japanese: "動機、動機づけ", category: "9. 動機づけ・感情心理学", related: "関連: human motivation, company performance" },
+    { english: "tension", japanese: "緊張", category: "9. 動機づけ・感情心理学", related: "関連: stress activates pathways, muscle tension" },
+    { english: "pleasure", japanese: "喜び、楽しみ、快", category: "9. 動機づけ・感情心理学", related: "関連: pleasure and duty" },
+    { english: "shame", japanese: "恥、恥ずかしさ", category: "9. 動機づけ・感情心理学", related: "関連: inferiority, humiliation" },
+    { english: "annoyance", japanese: "いらだち", category: "9. 動機づけ・感情心理学", related: "関連: communication contains contradictory messages" },
+    { english: "jealousy", japanese: "嫉妬", category: "9. 動機づけ・感情心理学", related: "関連: Klein, fear of losing what one has" },
+    { english: "motive", japanese: "動機", category: "9. 動機づけ・感情心理学", related: "関連: achievement motive, TATF " },
+    { english: "aggressive", japanese: "攻撃的な", category: "9. 動機づけ・感情心理学", related: "関連: antisocial personality disorder, destructive behaviors" },
+    { english: "distraction", japanese: "散らすこと", category: "9. 動機づけ・感情心理学", related: "関連: rumination or distraction condition" },
+    { english: "incentive", japanese: "誘因、インセンティブ", category: "9. 動機づけ・感情心理学", related: "関連: process that begins with inner drive" },
+    { english: "hostility", japanese: "敵意", category: "9. 動機づけ・感情心理学", related: "関連: higher levels of stress and depression" },
+    { english: "emotional", japanese: "情動の、情緒的な", category: "9. 動機づけ・感情心理学", related: "関連: Lazarus, cognitive appraisals" },
+    { english: "fear", japanese: "恐怖", category: "9. 動機づけ・感情心理学", related: "関連: dark, children's fear" },
+    { english: "stress", japanese: "ストレス、圧力", category: "9. 動機づけ・感情心理学", related: "関連: cancer, heart disease" },
+    { english: "feeling", japanese: "感じる、考える、感情", category: "9. 動機づけ・感情心理学", related: "関連: negative feelings, objective judgements" },
+    { english: "state", japanese: "状態", category: "9. 動機づけ・感情心理学", related: "関連: STAI, state and trait anxiety" },
+    { english: "conflict", japanese: "葛藤、衝突", category: "9. 動機づけ・感情心理学", related: "関連: interpersonal relationships" },
+    { english: "affect", japanese: "感情", category: "9. 動機づけ・感情心理学", related: "関連: emotion and mood" },
+    { english: "anger", japanese: "怒り", category: "9. 動機づけ・感情心理学", related: "関連: blood pressure and heart rate" },
+    { english: "threat", japanese: "脅威", category: "9. 動機づけ・感情心理学", related: "関連: positive memories, retrieve positive information" },
+    { english: "mood", japanese: "気分", category: "9. 動機づけ・感情心理学", related: "関連: negative mood, recall more negative memories" },
+    { english: "frustration", japanese: "欲求不満", category: "9. 動機づけ・感情心理学", related: "関連: aggressive behaviors, substitution behaviors" },
+    // ==========================================
+    // 10. 一般用語 (1〜400語)
+    // ==========================================
+    { english: "occur", japanese: "生じる、起こる", category: "10. 一般用語", related: "関連: context, evaluates" },
+    { english: "orientation", japanese: "方向づけ、向き", category: "10. 一般用語", related: "関連: postural orientations, facial expressions" },
+    { english: "perspective", japanese: "観点", category: "10. 一般用語", related: "関連: evolutionary psychology, human biological evolution" },
+    { english: "adjustment", japanese: "適応、順応、調整", category: "10. 一般用語", related: "関連: chronic disorders, adjustment problems" },
+    { english: "material", japanese: "刺激、素材、道具", category: "10. 一般用語", related: "関連: experiment, unfamiliar participants" },
+    { english: "aware", japanese: "気づいて", category: "10. 一般用語", related: "関連: attitudes, predict behavior" },
+    { english: "indicate", japanese: "示唆する、示す、指摘する", category: "10. 一般用語", related: "関連: possibilities of psychology" },
+    { english: "produce", japanese: "生み出す、産出する、作り出す", category: "10. 一般用語", related: "関連: research groups, intelligence scores" },
+    { english: "severe", japanese: "重い、重度の、ひどい", category: "10. 一般用語", related: "関連: psychological disorders, parental attitudes" },
+    { english: "subjective", japanese: "主観的な", category: "10. 一般用語", related: "関連: questionnaire, personality test" },
+    { english: "useful", japanese: "役に立つ", category: "10. 一般用語", related: "関連: TAT, assessing important psychological features" },
+    { english: "cause", japanese: "引き起こす、〜させる", category: "10. 一般用語", related: "関連: watching violence on television, children to be violent" },
+    { english: "consistent", japanese: "一貫した、一致している", category: "10. 一般用語", related: "関連: stress at work, well-being of employees" },
+    { english: "issue", japanese: "問題、論争、発行", category: "10. 一般用語", related: "関連: direct observations of events and humans" },
+    { english: "capacity", japanese: "能力、容量", category: "10. 一般用語", related: "関連: short-term memory, magical number" },
+    { english: "current", japanese: "今時の、最近の、この流れ", category: "10. 一般用語", related: "関連: memory, current experiment" },
+    { english: "difficulty", japanese: "問題、困難、障害", category: "10. 一般用語", related: "関連: individual's ability to adapt, state of crisis" },
+    { english: "appropriate", japanese: "適切な、ふさわしい", category: "10. 一般用語", related: "関連: behavior therapists, appropriate responses" },
+    { english: "function", japanese: "機能、作用、働き", category: "10. 一般用語", related: "関連: Ego can manifest itself in functions" },
+    { english: "reaction", japanese: "反応", category: "10. 一般用語", related: "関連: Liberals and conservatives, unconscious reactions" },
+    { english: "expression", japanese: "表現", category: "10. 一般用語", related: "関連: Play therapy, medium of self expression" },
+    { english: "species", japanese: "種(しゅ)、種類", category: "10. 一般用語", related: "関連: learning can apply to many species" },
+    { english: "available", japanese: "利用できる、入手できる", category: "10. 一般用語", related: "関連: researches on workplace stress" },
+    { english: "external", japanese: "外的な、外側の", category: "10. 一般用語", related: "関連: locus of control, chance or outside forces" },
+    { english: "interpersonal", japanese: "対人関係の", category: "10. 一般用語", related: "関連: psychotherapy, interpersonal process" },
+    { english: "notion", japanese: "考え、概念、観念", category: "10. 一般用語", related: "関連: Selye's notion, general adaptation syndrome" },
+    { english: "nature", japanese: "性質、本質、自然", category: "10. 一般用語", related: "関連: aspire to be a psychologist, human beings" },
+    { english: "belief", japanese: "信念、考え", category: "10. 一般用語", related: "関連: belief and behavior" },
+    { english: "focus", japanese: "焦点を当てる", category: "10. 一般用語", related: "関連: adolescent's voluntary disclosure" },
+    { english: "term", japanese: "用語、期間", category: "10. 一般用語", related: "関連: conscious and unconscious, psychoanalytic therapy" },
+    { english: "potential", japanese: "潜在能力、可能性", category: "10. 一般用語", related: "関連: personality traits, develop" },
+    { english: "include", japanese: "含む", category: "10. 一般用語", related: "関連: participants of this study, 100 university students" },
+    { english: "analysis", japanese: "分析", category: "10. 一般用語", related: "関連: schizophrenia, primary factor" },
+    { english: "action", japanese: "行為、活動、行い", category: "10. 一般用語", related: "関連: control over actions" },
+    { english: "context", japanese: "文脈、背景、状況", category: "10. 一般用語", related: "関連: adolescents lived, individual characteristics" },
+    { english: "influence", japanese: "影響する、左右する", category: "10. 一般用語", related: "関連: past conflicts, emotional expression" },
+    { english: "range", japanese: "幅、範囲など", category: "10. 一般用語", related: "関連: negative symptoms of schizophrenia, emotional expression" },
+    { english: "source", japanese: "情報源", category: "10. 一般用語", related: "関連: study of human society, source of information" },
+    { english: "suggest", japanese: "示唆する、示す", category: "10. 一般用語", related: "関連: importance of the parent-child relationship" },
+    { english: "approach", japanese: "アプローチする、接近する", category: "10. 一般用語", related: "関連: clinical psychologists, individual client" },
+    { english: "need", japanese: "欲求、必要性", category: "10. 一般用語", related: "関連: need for self-actualization, fundamental psychological need" },
+    { english: "knowledge", japanese: "知識", category: "10. 一般用語", related: "関連: Francis Bacon, knowledge is power" },
+    { english: "form", japanese: "形成する、形作る", category: "10. 一般用語", related: "関連: reading fiction, opinions based on individual experience" },
+    { english: "view", japanese: "見方、意見、視野", category: "10. 一般用語", related: "関連: ability to retrieve information, point of view" },
+    { english: "ability", japanese: "能力", category: "10. 一般用語", related: "関連: ability to retrieve information from past memory" },
+    { english: "risk", japanese: "リスク、危険", category: "10. 一般用語", related: "関連: psychological stress in children, risk factors" },
+    { english: "performance", japanese: "成績、行い、能力", category: "10. 一般用語", related: "関連: academic performance in school" },
+    { english: "similar", japanese: "類似の、似た、同じような", category: "10. 一般用語", related: "関連: same diagnosis, similar clinical features" },
+    { english: "period", japanese: "期間", category: "10. 一般用語", related: "関連: study was conducted, spanning a period of 10 years" },
+    { english: "provide", japanese: "提供する、与える", category: "10. 一般用語", related: "関連: study provided insight, how babies learn through play" },
+    { english: "common", japanese: "一般的な、よくある、共通の", category: "10. 一般用語", related: "関連: interpersonal relationship problems, common factor" },
+    { english: "present", japanese: "提示する、現在、存在", category: "10. 一般用語", related: "関連: visual and auditory stimuli" },
+    { english: "search", japanese: "探す、探求する、調べる、調査", category: "10. 一般用語", related: "関連: psychologists have searched, scientific discipline" },
+    { english: "study", japanese: "研究、勉強", category: "10. 一般用語", related: "関連: purpose of this study, placebo effect of painkillers" },
+    { english: "relationship", japanese: "関係、関連", category: "10. 一般用語", related: "関連: relationship between teacher and student, academic performance" },
+    { english: "process", japanese: "プロセス、過程", category: "10. 一般用語", related: "関連: process of forgetting slower" },
+    { english: "psychological", japanese: "心理的の、心理学的の", category: "10. 一般用語", related: "関連: psychological and physical changes" },
+    { english: "physical", japanese: "物理的な、身体的な", category: "10. 一般用語", related: "関連: physical things to psychological things" },
+    { english: "order", japanese: "秩序、順番、命令", category: "10. 一般用語", related: "関連: social order, moral rules" },
+    { english: "positive", japanese: "ポジティブな、プラスの、肯定的な、正の", category: "10. 一般用語", related: "関連: positive or negative, hypothesis" },
+    { english: "theory", japanese: "理論", category: "10. 一般用語", related: "関連: humanistic school of psychology, falsifiability" },
+    { english: "school", japanese: "学派、学校", category: "10. 一般用語", related: "関連: school of psychology, fully developing one's potential" },
+    { english: "response", japanese: "反応、回答する", category: "10. 一般用語", related: "関連: specific stressors, short self-report measure" },
+    { english: "evidence", japanese: "証拠", category: "10. 一般用語", related: "関連: empirical evidence, child maltreatment" },
+    { english: "effect", japanese: "影響、効果", category: "10. 一般用語", related: "関連: Relaxation techniques, positive effect on alleviating fear and anxiety" },
+    { english: "feature", japanese: "特徴", category: "10. 一般用語", related: "関連: personality structure" },
+    { english: "hold", japanese: "考える、持つ", category: "10. 一般用語", related: "関連: innate store of knowledge" },
+    { english: "multiple", japanese: "複数の、多様な", category: "10. 一般用語", related: "関連: multiple informants" },
+    { english: "rigid", japanese: "硬い、柔軟性のない", category: "10. 一般用語", related: "関連: rigid boundaries" },
+    { english: "sequence", japanese: "連続、連鎖", category: "10. 一般用語", related: "関連: sequence of growth" },
+    { english: "shape", japanese: "形成する、方向づける", category: "10. 一般用語", related: "関連: shape how we think" },
+    { english: "apparent", japanese: "明白な、見かけ上の", category: "10. 一般用語", related: "関連: apparent reason" },
+    { english: "commitment", japanese: "関与、コミットメント", category: "10. 一般用語", related: "関連: commitment in romantic relationships" },
+    { english: "concrete", japanese: "具体的な", category: "10. 一般用語", related: "関連: concrete experience and abstract thought" },
+    { english: "distinction", japanese: "区別、識別、特徴", category: "10. 一般用語", related: "関連: distinction between perceptions and ideas" },
+    { english: "engage", japanese: "関わる、行う", category: "10. 一般用語", related: "関連: engage in antisocial behaviors" },
+    { english: "ethical", japanese: "倫理的な、倫理の", category: "10. 一般用語", related: "関連: ethical codes" },
+    { english: "expect", japanese: "期待する、予期する", category: "10. 一般用語", related: "関連: expecting what can be expected" },
+    { english: "facilitate", japanese: "促進する、手伝う", category: "10. 一般用語", related: "関連: facilitates the development of parent-child attachment" },
+    { english: "note", japanese: "録する、書きとめる、記す、注意する", category: "10. 一般用語", related: "関連: researcher notes" },
+    { english: "objective", japanese: "客観的な、目的、目標", category: "10. 一般用語", related: "関連: objective features" },
+    { english: "organization", japanese: "組織、組織化", category: "10. 一般用語", related: "関連: organization of both internal and social-cultural experience" },
+    { english: "progress", japanese: "進歩、発展", category: "10. 一般用語", related: "関連: progress toward the treatment goals" },
+    { english: "race", japanese: "種(しゅ)、人種", category: "10. 一般用語", related: "関連: own race" },
+    { english: "relevant", japanese: "関連する、妥当な", category: "10. 一般用語", related: "関連: relevant study regarding attachment theory" },
+    { english: "share", japanese: "持つ、共有する", category: "10. 一般用語", related: "関連: who share their physical traits" },
+    { english: "signal", japanese: "信号、合図", category: "10. 一般用語", related: "関連: signal their boredom" },
+    { english: "strategy", japanese: "戦略、方略", category: "10. 一般用語", related: "関連: coping strategy" },
+    { english: "convey", japanese: "伝える", category: "10. 一般用語", related: "関連: convey what we see, feel and think" },
+    { english: "encounter", japanese: "出会う、直面する", category: "10. 一般用語", related: "関連: encounter and process a large amount of sensory information" },
+    { english: "evolutionary", japanese: "進化論的な、進化的な", category: "10. 一般用語", related: "関連: evolutionary advantage" },
+    { english: "aim", japanese: "〜を目指す、〜しようと努力する、目的", category: "10. 一般用語", related: "関連: aimed at revealing the individual's implicit needs" },
+    { english: "classification", japanese: "分類", category: "10. 一般用語", related: "関連: any classifications" },
+    { english: "epistemic", japanese: "認識論の、認識論的", category: "10. 一般用語", related: "関連: epistemic beliefs" },
+    { english: "manage", japanese: "うまく扱う、うまく処理する、うまく管理する、取り扱い、管理", category: "10. 一般用語", related: "関連: manage their feelings under pressure" },
+    { english: "overcome", japanese: "克服する、乗り越える", category: "10. 一般用語", related: "関連: overcome test anxiety" },
+    { english: "paradigm", japanese: "パラダイム", category: "10. 一般用語", related: "関連: research paradigms in empirical psychology" },
+    { english: "predict", japanese: "予測する", category: "10. 一般用語", related: "関連: predicts longer life" },
+    { english: "refer", japanese: "〜と言う、言及する、示す、参照する", category: "10. 一般用語", related: "関連: refers to statistical deviation" },
+    { english: "activation", japanese: "活性化、促進する", category: "10. 一般用語", related: "関連: cognitive resources" },
+    { english: "assume", japanese: "想定する、考える、仮定する", category: "10. 一般用語", related: "関連: assumed that Westerners may experience more strong attachment" },
+    { english: "characteristic", japanese: "特徴", category: "10. 一般用語", related: "関連: characteristics of the people who achieve economic success" },
+    { english: "draw", japanese: "引き出す、導き出す", category: "10. 一般用語", related: "関連: draw firm causal conclusions" },
+    { english: "alternative", japanese: "代替の、選択肢", category: "10. 一般用語", related: "関連: cognitive dissonance theory, alternatives are equally attractive" },
+    { english: "critical", japanese: "重大な、批判的な", category: "10. 一般用語", related: "関連: critical skill which promotes mental health" },
+    { english: "deal", japanese: "（〜と）扱う", category: "10. 一般用語", related: "関連: dealing with 'clinical psychology'" },
+    { english: "empirical", japanese: "実証的な、経験的な", category: "10. 一般用語", related: "関連: empirical evidence on the effectiveness of psychotherapies" },
+    { english: "exposure", japanese: "（親密な影響を）受けること、主観的経験の共有と攻撃性の関係", category: "10. 一般用語", related: "関連: exposure to televised violence and aggressive behavior" },
+    { english: "involve", japanese: "含む、関係する、関与する", category: "10. 一般用語", related: "関連: involve linguistic interaction with the mother" },
+    { english: "principle", japanese: "原則、原理", category: "10. 一般用語", related: "関連: principles of learning offer effective means" },
+    { english: "represent", japanese: "表す、表象する、象徴する", category: "10. 一般用語", related: "関連: representing real or hypothetical experiences" },
+    { english: "serve", japanese: "提供する、〜に役立つ", category: "10. 一般用語", related: "関連: served as a source of ideas" },
+    { english: "trust", japanese: "信頼する", category: "10. 一般用語", related: "関連: trust and cooperation in your group" },
+    { english: "article", japanese: "論文、記事", category: "10. 一般用語", related: "関連: read the article first" },
+    { english: "origin", japanese: "起源、はじまり、由来", category: "10. 一般用語", related: "関連: On the Origin of Species" },
+    { english: "underlying", japanese: "根底にある、基礎をなす", category: "10. 一般用語", related: "関連: underlying principles" },
+    { english: "structure", japanese: "構造、構成", category: "10. 一般用語", related: "関連: fragile personality structure" },
+    { english: "achieve", japanese: "達成する、獲得する、果たす", category: "10. 一般用語", related: "関連: achieve their full potential" },
+    { english: "concern", japanese: "関係する、心配させる、関心ごと、関心、心配", category: "10. 一般用語", related: "関連: attribution theory is concerned with how individuals explain the behavior" },
+    { english: "identify", japanese: "特定する、確認する、同一化する", category: "10. 一般用語", related: "関連: identify reinforcers" },
+    { english: "impairment", japanese: "障害、損傷、悪化", category: "10. 一般用語", related: "関連: severe impairment to social functioning" },
+    { english: "purpose", japanese: "目的", category: "10. 一般用語", related: "関連: purpose of testing" },
+    { english: "serious", japanese: "まじめな、深刻な", category: "10. 一般用語", related: "関連: serious consequences" },
+    { english: "will", japanese: "意思、決意", category: "10. 一般用語", related: "関連: against her own will" },
+    { english: "attempt", japanese: "試みる、〜しようとする、試み", category: "10. 一般用語", related: "関連: attempt to hurry the process" },
+    { english: "finding", japanese: "結果", category: "10. 一般用語", related: "関連: findings of this study suggest" },
+    { english: "pressure", japanese: "プレッシャー、圧力をかける", category: "10. 一般用語", related: "関連: peer pressure" },
+    { english: "recognize", japanese: "認める、認識する", category: "10. 一般用語", related: "関連: recognize that even the best clinicians' frustrated responses" },
+    { english: "reflect", japanese: "反映する、反射、思考", category: "10. 一般用語", related: "関連: BPD diagnosis often reflects clinicians' frustrated responses" },
+    { english: "familiar", japanese: "よく知っている、なじみのある", category: "10. 一般用語", related: "関連: familiar items" },
+    { english: "neutral", japanese: "中性の、中立的な", category: "10. 一般用語", related: "関連: relatively neutral, human nature" },
+    { english: "paper", japanese: "論文、紙", category: "10. 一般用語", related: "関連: case report, sandplay therapy" },
+    { english: "premise", japanese: "前提、仮定", category: "10. 一般用語", related: "関連: premise of self enhancement theory" },
+    { english: "regard", japanese: "みなす、考える、評価する", category: "10. 一般用語", related: "関連: regarded as consequence of therapeutic work" },
+    { english: "seek", japanese: "求める、〜しようと努力する、探す", category: "10. 一般用語", related: "関連: seek to understand and predict behavior" },
+    { english: "systematic", japanese: "体系的な、組織的な", category: "10. 一般用語", related: "関連: systematic study of forgetting" },
+    { english: "consequence", japanese: "結果、影響", category: "10. 一般用語", related: "関連: produce inappropriate consequences" },
+    { english: "crucial", japanese: "決定的な、重要な", category: "10. 一般用語", related: "関連: crucial factors supporting healing" },
+    { english: "demonstrate", japanese: "証明する、示す", category: "10. 一般用語", related: "関連: demonstrated that learning principles can be applied" },
+    { english: "discipline", japanese: "学問、規律、訓練", category: "10. 一般用語", related: "関連: scientific study of mental functions" },
+    { english: "framework", japanese: "枠組み", category: "10. 一般用語", related: "関連: necessary framework when assessing younger children" },
+    { english: "ideal", japanese: "理想、理想的な", category: "10. 一般用語", related: "関連: provide ideals, explanations" },
+    { english: "initially", japanese: "最初は、まず第一に、最初に", category: "10. 一般用語", related: "関連: initially focused on praising the client" },
+    { english: "intense", japanese: "激しい、強い", category: "10. 一般用語", related: "関連: intense emotional experience" },
+    { english: "intensity", japanese: "強度、強さ、激しさ", category: "10. 一般用語", related: "関連: intensity of sensation, intensity of the stimulus" },
+    { english: "negatively", japanese: "否定的に、ネガティブに", category: "10. 一般用語", related: "関連: negatively related to a students' academic achievement" },
+    { english: "philosophy", japanese: "哲学", category: "10. 一般用語", related: "関連: philosophy of counseling psychology" },
+    { english: "realize", japanese: "認識する、理解する、実現する", category: "10. 一般用語", related: "関連: brain itself cannot realize them" },
+    { english: "sensitivity", japanese: "感受性、感度", category: "10. 一般用語", related: "関連: demands great sensitivity and empathy" },
+    { english: "setting", japanese: "環境、背景", category: "10. 一般用語", related: "関連: school settings, crisis intervention" },
+    { english: "stability", japanese: "安定性", category: "10. 一般用語", related: "関連: stability of self-esteem" },
+    { english: "universal", japanese: "普遍的な、一般的な", category: "10. 一般用語", related: "関連: transference is universal" },
+    { english: "viewpoint", japanese: "観点、視点", category: "10. 一般用語", related: "関連: take the viewpoint of other people" },
+    { english: "imagine", japanese: "想像する", category: "10. 一般用語", related: "関連: imagine specific future events" },
+    { english: "improve", japanese: "向上する、高める、改善する", category: "10. 一般用語", related: "関連: effective at improving mood" },
+    { english: "valuable", japanese: "価値がある", category: "10. 一般用語", related: "関連: valuable to gather clients' information" },
+    { english: "abstract", japanese: "抽象的な", category: "10. 一般用語", related: "関連: develop abstract thought" },
+    { english: "agency", japanese: "仲介、媒介、仲介者", category: "10. 一般用語", related: "関連: treatment agency" },
+    { english: "ambiguous", japanese: "あいまいな、多義的な", category: "10. 一般用語", related: "関連: ambiguous testing stimuli" },
+    { english: "apply", japanese: "応用する、適用する、あてはめる", category: "10. 一般用語", related: "関連: applied in a natural environment" },
+    { english: "attribute", japanese: "帰属する、〜のせいにする", category: "10. 一般用語", related: "関連: attribute the cause of their successes" },
+    { english: "discrete", japanese: "ばらばらの、別々の", category: "10. 一般用語", related: "関連: discrete steps or stages of development" },
+    { english: "evaluate", japanese: "評価する", category: "10. 一般用語", related: "関連: evaluated by using the new IQ tests" },
+    { english: "explore", japanese: "調査する、探求する、探索する", category: "10. 一般用語", related: "関連: explored new situations" },
+    { english: "foundation", japanese: "基礎、土台、創設", category: "10. 一般用語", related: "関連: foundation of what was later to become counseling psychology" },
+    { english: "intact", japanese: "傷無しの、そのままの、完全な", category: "10. 一般用語", related: "関連: short-term memory was largely intact" },
+    { english: "maintain", japanese: "維持する、主張する", category: "10. 一般用語", related: "関連: maintain healthy relationship" },
+    { english: "notice", japanese: "気づく、注意する", category: "10. 一般用語", related: "関連: noticed that something was going on" },
+    { english: "obtain", japanese: "獲得する、入手する", category: "10. 一般用語", related: "関連: obtained through interviews" },
+    { english: "ordinary", japanese: "いつもの、日常の、通常の", category: "10. 一般用語", related: "関連: ordinary experience" },
+    { english: "prior", japanese: "先行する、前の", category: "10. 一般用語", related: "関連: prior knowledge" },
+    { english: "readily", japanese: "容易に、難なく", category: "10. 一般用語", related: "関連: readily manipulate" },
+    { english: "review", japanese: "レビューする、論評する", category: "10. 一般用語", related: "関連: reviewed 150 articles" },
+    { english: "survival", japanese: "生存、生き延びること、生存者", category: "10. 一般用語", related: "関連: essential for our survival" },
+    { english: "accomplish", japanese: "達成する、成し遂げる", category: "10. 一般用語", related: "関連: accomplish actions smoothly" },
+    { english: "contribute", japanese: "貢献する、寄与する", category: "10. 一般用語", related: "関連: contribute to individual differences" },
+    { english: "deliberate", japanese: "故意に、慎重な", category: "10. 一般用語", related: "関連: tell deliberate lies" },
+    { english: "evoke", japanese: "引き起こす", category: "10. 一般用語", related: "関連: evokes the same physiological responses" },
+    { english: "formula", japanese: "公式", category: "10. 一般用語", related: "関連: formula of the intelligence quotient" },
+    { english: "frame", japanese: "枠、枠組み", category: "10. 一般用語", related: "関連: internal frame of reference" },
+    { english: "identical", japanese: "同一の、同じ、一卵性の", category: "10. 一般用語", related: "関連: almost identical" },
+    { english: "illustrate", japanese: "図解する、例証する", category: "10. 一般用語", related: "関連: illustrated the difference" },
+    { english: "logical", japanese: "論理的な、論理学の", category: "10. 一般用語", related: "関連: test logical memory" },
+    { english: "manifestation", japanese: "表れ、明らかにすること", category: "10. 一般用語", related: "関連: manifestation of an unconscious conflict" },
+    { english: "observe", japanese: "観察する", category: "10. 一般用語", related: "関連: observe how significant adults treat one another" },
+    { english: "profound", japanese: "大きな、重大な、深い", category: "10. 一般用語", related: "関連: profound feeling of unfairness" },
+    { english: "receive", japanese: "受ける、受け取る", category: "10. 一般用語", related: "関連: receive high ratings" },
+    { english: "remove", japanese: "取り除く、除去する", category: "10. 一般用語", related: "関連: removed his/her internal organs" },
+    { english: "resolve", japanese: "解決する、決める", category: "10. 一般用語", related: "関連: resolve all the problems" },
+    { english: "usual", japanese: "いつもの、通常の", category: "10. 一般用語", related: "関連: usual for counselors" },
+    { english: "valence", japanese: "価、感情価", category: "10. 一般用語", related: "関連: negatively valenced words" },
+    { english: "adverse", japanese: "逆の、反対の、有害な", category: "10. 一般用語", related: "関連: adverse consequences" },
+    { english: "appreciation", japanese: "認識、理解", category: "10. 一般用語", related: "関連: greater appreciation of grief" },
+    { english: "comparative psychology", japanese: "比較心理学", category: "10. 一般用語", related: "関連: Comparative psychology has contributed" },
+    { english: "comprehensive", japanese: "包括的な、広範囲の", category: "10. 一般用語", related: "関連: comprehensive understanding" },
+    { english: "constructive", japanese: "建設的な、構造上の", category: "10. 一般用語", related: "関連: constructive expression" },
+    { english: "discriminate", japanese: "区別する、弁別する", category: "10. 一般用語", related: "関連: discriminate speech sounds" },
+    { english: "emerge", japanese: "現れる", category: "10. 一般用語", related: "関連: emerged in the 1980s" },
+    { english: "enhance", japanese: "高める、増す", category: "10. 一般用語", related: "関連: enhance learning" },
+    { english: "equivalent", japanese: "同等の、等価の", category: "10. 一般用語", related: "関連: as if they were equivalent" },
+    { english: "foster", japanese: "養う、育成する、助長する", category: "10. 一般用語", related: "関連: foster a child's healthy growth" },
+    { english: "innate", japanese: "生得的な", category: "10. 一般用語", related: "関連: innate ideas" },
+    { english: "inspection", japanese: "調査、検査", category: "10. 一般用語", related: "関連: available for inspection" },
+    { english: "intensive", japanese: "集中的な、徹底的な", category: "10. 一般用語", related: "関連: intensive exposure therapy" },
+    { english: "internalize", japanese: "内在化した", category: "10. 一般用語", related: "関連: internalizing symptoms" },
+    { english: "opposite", japanese: "反対の、逆の", category: "10. 一般用語", related: "関連: opposite meaning" },
+    { english: "permanent", japanese: "永続的な", category: "10. 一般用語", related: "関連: permanent memory" },
+    { english: "rapid", japanese: "急速な、速い", category: "10. 一般用語", related: "関連: rapid physical changes" },
+    { english: "regulate", japanese: "規制する、統制する、調整する", category: "10. 一般用語", related: "関連: regulate emotions" },
+    { english: "retain", japanese: "保持する、保つ、維持する", category: "10. 一般用語", related: "関連: retain information" },
+    { english: "sign", japanese: "記号、兆候、合図", category: "10. 一般用語", related: "関連: signs and symptoms" },
+    { english: "sufficient", japanese: "十分な", category: "10. 一般用語", related: "関連: sufficient information" },
+    { english: "susceptibility", japanese: "感受性、影響を受けやすいこと", category: "10. 一般用語", related: "関連: false-memory susceptibility" },
+    { english: "transformation", japanese: "変容、変化", category: "10. 一般用語", related: "関連: psychological transformation" },
+    { english: "accumulation", japanese: "蓄積、累積", category: "10. 一般用語", related: "関連: accumulation of risk" },
+    { english: "clarify", japanese: "明確にする、明らかにする", category: "10. 一般用語", related: "関連: clarify the feelings" },
+    { english: "confirm", japanese: "確認する、確かめる", category: "10. 一般用語", related: "関連: confirm that narcissistic people like to talk" },
+    { english: "discrepancy", japanese: "不一致、ズレ", category: "10. 一般用語", related: "関連: discrepancy between what infants expect and what actually happens" },
+    { english: "eliminate", japanese: "削除する、取り除く", category: "10. 一般用語", related: "関連: identified and eliminated" },
+    { english: "human nature", japanese: "人間性", category: "10. 一般用語", related: "関連: focus on individual differences, not on human nature" },
+    { english: "mutual", japanese: "相互の", category: "10. 一般用語", related: "関連: developmentally meaningful interventions" },
+    { english: "odd", japanese: "奇妙な、変わった", category: "10. 一般用語", related: "関連: eccentric thinking or behavior" },
+    { english: "paradox", japanese: "パラドックス、逆説", category: "10. 一般用語", related: "関連: expertise paradox" },
+    { english: "persist", japanese: "主張する、固執する、持続する", category: "10. 一般用語", related: "関連: serious psychological problems" },
+    { english: "pursuit", japanese: "追求、仕事、研究", category: "10. 一般用語", related: "関連: pursuit of reason" },
+    { english: "reassurance", japanese: "再確認、再保証", category: "10. 一般用語", related: "関連: seek reassurance" },
+    { english: "relate", japanese: "関係づける、関連する", category: "10. 一般用語", related: "関連: untreated childhood anxiety" },
+    { english: "repertoire", japanese: "レパートリー", category: "10. 一般用語", related: "関連: clinical psychologist can use" },
+    { english: "repetition", japanese: "反復、繰り返し", category: "10. 一般用語", related: "関連: cognitive associations" },
+    { english: "replace", japanese: "変える、戻す", category: "10. 一般用語", related: "関連: replace negative patterns of thought" },
+    { english: "resist", japanese: "抵抗する、耐える", category: "10. 一般用語", related: "関連: resist persuasion" },
+    { english: "self-directed", japanese: "自発的な", category: "10. 一般用語", related: "関連: self-directed exploration" },
+    { english: "static", japanese: "静的な、固定的な", category: "10. 一般用語", related: "関連: static store of information" },
+    { english: "contradictory", japanese: "矛盾した、対立した", category: "10. 一般用語", related: "関連: contradictory evidence" },
+    { english: "entity", japanese: "実体、実在、存在", category: "10. 一般用語", related: "関連: normal infants are logically healthy" },
+    { english: "environment", japanese: "環境、周囲", category: "10. 一般用語", related: "関連: unrealistic fantasies of success" },
+    { english: "excessive", japanese: "過剰な、過度の", category: "10. 一般用語", related: "関連: excessive sense of self-importance" },
+    { english: "exert", japanese: "使う、行使する", category: "10. 一般用語", related: "関連: exert a strong hypnotic influence" },
+    { english: "inevitable", japanese: "必然的に、必ず", category: "10. 一般用語", related: "関連: inevitable to ensue" },
+    { english: "instruction", japanese: "教示、指示", category: "10. 一般用語", related: "関連: provided participants with instructions" },
+    { english: "intake", japanese: "摂取、取り入れ", category: "10. 一般用語", related: "関連: limits food intake" },
+    { english: "interfere", japanese: "妨害する、邪魔する、干渉する", category: "10. 一般用語", related: "関連: interfere with their professional functioning" },
+    { english: "interrelated", japanese: "相互に関係のある", category: "10. 一般用語", related: "関連: set of propositions about a particular phenomenon" },
+    { english: "metaphor", japanese: "メタファー、暗喩", category: "10. 一般用語", related: "関連: metaphor of master and slave" },
+    { english: "monitor", japanese: "監視する、チェックする", category: "10. 一般用語", related: "関連: less likely to be monitored by conscious process" },
+    { english: "mortality", japanese: "死ぬ運命、死亡率", category: "10. 一般用語", related: "関連: mortality rate than any mental illness" },
+    { english: "proportion", japanese: "割合、比率", category: "10. 一般用語", related: "関連: proportions of eating disorders" },
+    { english: "propose", japanese: "提案する", category: "10. 一般用語", related: "関連: proposed to explain the relationship" },
+    { english: "remind", japanese: "思い出させる、気づかせる", category: "10. 一般用語", related: "関連: cookies might remind you of the time" },
+    { english: "reverse", japanese: "逆転させる、反対にする", category: "10. 一般用語", related: "関連: conservation and reverse thoughts" },
+    { english: "salient", japanese: "顕著な、目立つ", category: "10. 一般用語", related: "関連: salient to older adults" },
+    { english: "somatic", japanese: "身体的な、身体の", category: "10. 一般用語", related: "関連: somatic symptoms, including headache" },
+    { english: "spontaneously", japanese: "自発的に", category: "10. 一般用語", related: "関連: autistic children rarely engage in pretend play" },
+    { english: "supply", japanese: "提供する、供給", category: "10. 一般用語", related: "関連: self-help group can supply mental relief" },
+    { english: "undermine", japanese: "傷つける、だめにする", category: "10. 一般用語", related: "関連: undermine the sense of competence" },
+    { english: "unfolding", japanese: "展開、開花", category: "10. 一般用語", related: "関連: new miracle of vigorous unfolding" },
+    { english: "acknowledge", japanese: "認める、認識する", category: "10. 一般用語", related: "関連: acknowledge that the unconditional positive regard" },
+    { english: "associate", japanese: "関連する、連想", category: "10. 一般用語", related: "関連: happiness is not associated with money" },
+    { english: "constraint", japanese: "制限、強制する", category: "10. 一般用語", related: "関連: constraints of a person's biological endowment" },
+    { english: "controversial", japanese: "論争をかもす、論争上の", category: "10. 一般用語", related: "関連: most controversial studies in the field of psychology" },
+    { english: "employ", japanese: "使用する、雇う", category: "10. 一般用語", related: "関連: procedures employed in a neuropsychological examination" },
+    { english: "extensive", japanese: "広い、広範囲の、大量の", category: "10. 一般用語", related: "関連: extensive body of literature indicates" },
+    { english: "implication", japanese: "意味、ほのめかし、かかりあい", category: "10. 一般用語", related: "関連: profound implications for defining what a good society is" },
+    { english: "incidence", japanese: "発生、発生率", category: "10. 一般用語", related: "関連: link to higher incidences of drinking" },
+    { english: "magnitude", japanese: "大きさ、重要性", category: "10. 一般用語", related: "関連: magnitude of a physical stimulus" },
+    { english: "minimize", japanese: "最小限にする", category: "10. 一般用語", related: "関連: minimize bias and control confounds" },
+    { english: "moderate", japanese: "中程度の、穏やかな", category: "10. 一般用語", related: "関連: moderate to high levels of stress" },
+    { english: "operate", japanese: "操作する、働く", category: "10. 一般用語", related: "関連: not operating properly" },
+    { english: "outline", japanese: "概説する、概観する", category: "10. 一般用語", related: "関連: chapter outlines the essential features" },
+    { english: "pose", japanese: "提示する、主張する、ポーズ、姿勢", category: "10. 一般用語", related: "関連: pose four fundamental and important questions" },
+    { english: "prefer", japanese: "好む", category: "10. 一般用語", related: "関連: prefer to be alone or with others" },
+    { english: "priority", japanese: "重要なこと、優先順位", category: "10. 一般用語", related: "関連: highest priority in an initial interview" },
+    { english: "simultaneously", japanese: "同時に", category: "10. 一般用語", related: "関連: behavior is caused by various factors interacting simultaneously" },
+    { english: "skill", japanese: "スキル、技能", category: "10. 一般用語", related: "関連: infant's visual skill is better than it was previously thought" },
+    { english: "struggle", japanese: "格闘する、戦う", category: "10. 一般用語", related: "関連: struggle in the course of development" },
+    { english: "suffer", japanese: "傷つく、苦しむ、悩む", category: "10. 一般用語", related: "関連: suffer from psychological damage" },
+    { english: "superficial", japanese: "表面的な、表面の", category: "10. 一般用語", related: "関連: social relationships can be lasting or temporary" },
+    { english: "suppose", japanese: "思う、考える", category: "10. 一般用語", related: "関連: assessment tool no longer measures whatever it was supposed to measure" },
+    { english: "surrounding", japanese: "環境、周囲", category: "10. 一般用語", related: "関連: our surroundings may have an effect on our emotions" },
+    { english: "temporary", japanese: "一時的な、つかの間の", category: "10. 一般用語", related: "関連: temporary -- fleeting, intimate or superficial" },
+    { english: "transmission", japanese: "伝達", category: "10. 一般用語", related: "関連: transmission of child abuse" },
+    { english: "vary", japanese: "変わる、異なる", category: "10. 一般用語", related: "関連: vary according to the client's problems" },
+    { english: "voluntary", japanese: "自発的な", category: "10. 一般用語", related: "関連: responses learned in operant conditioning are voluntary" },
+    { english: "cluster", japanese: "クラスター、かたまり", category: "10. 一般用語", related: "関連: cluster B personality disorders" },
+    { english: "continuity", japanese: "連続性", category: "10. 一般用語", related: "関連: true self is the innate potential which is experiencing a continuity of being" },
+    { english: "strict", japanese: "厳密な、厳しい", category: "10. 一般用語", related: "関連: strict behaviorism" },
+    { english: "suppress", japanese: "抑える、抑制する", category: "10. 一般用語", related: "関連: suppress thoughts" },
+    { english: "suspicion", japanese: "疑い", category: "10. 一般用語", related: "関連: suspicion regarding purpose" },
+    { english: "undergraduate", japanese: "大学生、学部学生", category: "10. 一般用語", related: "関連: undergraduate students" },
+    { english: "uniform", japanese: "同一の、一定の", category: "10. 一般用語", related: "関連: uniform conditions" },
+    { english: "unity", japanese: "統一、統一体、まとまり、一致", category: "10. 一般用語", related: "関連: unity or a Gestalt" },
+    { english: "violation", japanese: "違反、妨害、暴行", category: "10. 一般用語", related: "関連: sexual violations" },
+    { english: "vulnerable", japanese: "〜を受けやすい、〜に弱い、〜になりやすい", category: "10. 一般用語", related: "関連: vulnerable to stress" },
+    { english: "credibility", japanese: "信用性、信憑性", category: "10. 一般用語", related: "関連: credibility of a child witness" },
+    { english: "eclecticism", japanese: "折衷主義、折衷主義柄", category: "10. 一般用語", related: "関連: eclecticism in psychotherapy" },
+    { english: "fragile", japanese: "もろい、弱い", category: "10. 一般用語", related: "関連: fragile species" },
+    { english: "illuminate", japanese: "明瞭にする", category: "10. 一般用語", related: "関連: illuminate a specific personality attribute" },
+    { english: "incorporate", japanese: "組み入れる、含む", category: "10. 一般用語", related: "関連: incorporated into descriptive approaches" },
+    { english: "inferior", japanese: "劣った", category: "10. 一般用語", related: "関連: feel inferior" },
+    { english: "initiate", japanese: "始める、教える", category: "10. 一般用語", related: "関連: initiated by events" },
+    { english: "insistence", japanese: "主張、こだわり", category: "10. 一般用語", related: "関連: insistences on certain routines" },
+    { english: "instinct", japanese: "本能", category: "10. 一般用語", related: "関連: basis of instincts" },
+    { english: "intend", japanese: "意図する、つもりである、予定である", category: "10. 一般用語", related: "関連: intended to convey meaning" },
+    { english: "intricate", japanese: "複雑な、入り組んだ", category: "10. 一般用語", related: "関連: remarkably intricate phenomenon" },
+    { english: "justify", japanese: "正当化する、弁明する", category: "10. 一般用語", related: "関連: justify a risky intervention" },
+    { english: "maximize", japanese: "最大にする", category: "10. 一般用語", related: "関連: maximize the opportunity" },
+    { english: "mention", japanese: "述べる、言及する", category: "10. 一般用語", related: "関連: mentioned already" },
+    { english: "overestimate", japanese: "過大評価する", category: "10. 一般用語", related: "関連: overestimate their ability to lie" },
+    { english: "proceed", japanese: "進む、〜し続ける", category: "10. 一般用語", related: "関連: as analysis proceeds" },
+    { english: "prominence", japanese: "卓越、名声、目立つこと", category: "10. 一般用語", related: "関連: gained greater prominence" },
+    { english: "prospect", japanese: "見通し、見込み、可能性", category: "10. 一般用語", related: "関連: future prospects" },
+    { english: "provoke", japanese: "引き起こす、駆り立てる", category: "10. 一般用語", related: "関連: provoke a fight-or-flight response" },
+    { english: "puzzle", japanese: "悩ませる、困らせる", category: "10. 一般用語", related: "関連: puzzled psychologists" },
+    { english: "raw", japanese: "生の、加工していない", category: "10. 一般用語", related: "関連: raw sensation" },
+    { english: "refine", japanese: "改良する、磨く", category: "10. 一般用語", related: "関連: needs to be refined" },
+    { english: "resource", japanese: "資源、情報源", category: "10. 一般用語", related: "関連: community based resources" },
+    { english: "restore", japanese: "回復する", category: "10. 一般用語", related: "関連: restore emotional well-being" },
+    { english: "scrutinize", japanese: "精査する、吟味する、よく調べる", category: "10. 一般用語", related: "関連: carefully scrutinize weak points" },
+    { english: "synthesize", japanese: "総括する、統合する", category: "10. 一般用語", related: "関連: synthesize the new beliefs" },
+    { english: "transient", japanese: "一時的な、つかの間の", category: "10. 一般用語", related: "関連: often transient" },
+    { english: "uncover", japanese: "明らかにする、暴露する", category: "10. 一般用語", related: "関連: uncovering material" },
+    { english: "undergo", japanese: "（治療などを）受ける、経験する", category: "10. 一般用語", related: "関連: undergoing treatment" },
+    { english: "accompany", japanese: "伴わせる、付随して生じる", category: "10. 一般用語", related: "関連: accompany an extremely stressful event" },
+    { english: "alleviate", japanese: "軽減する、和らげる", category: "10. 一般用語", related: "関連: effective in alleviating stress" },
+    { english: "assert", japanese: "主張する", category: "10. 一般用語", related: "関連: assert that death by suicide" },
+    { english: "colleague", japanese: "仲間、共同研究者、同僚", category: "10. 一般用語", related: "関連: colleagues examined" },
+    { english: "confuse", japanese: "混乱する、混同する", category: "10. 一般用語", related: "関連: confused about what they have actually experienced" },
+    { english: "connotation", japanese: "意味", category: "10. 一般用語", related: "関連: emotional connotations" },
+    { english: "correspond", japanese: "一致する、対応する", category: "10. 一般用語", related: "関連: corresponds to psychological maturity" },
+    { english: "defect", japanese: "障害、欠点、欠乏", category: "10. 一般用語", related: "関連: defect known as partial color blindness" },
+    { english: "derive", japanese: "（〜from）由来する、引き出す", category: "10. 一般用語", related: "関連: derives from the early work" },
+    { english: "devote", japanese: "（時間や労力を）ささげる、向ける、専念する", category: "10. 一般用語", related: "関連: devoted to the identification" },
+    { english: "disrupt", japanese: "崩壊させる、混乱させる", category: "10. 一般用語", related: "関連: easily disrupted" },
+    { english: "distort", japanese: "歪める、歪曲する", category: "10. 一般用語", related: "関連: distort your brain's record" },
+    { english: "dominate", japanese: "支配する", category: "10. 一般用語", related: "関連: dominated by behaviorism" },
+    { english: "estimate", japanese: "見積もる、推定する、評価する", category: "10. 一般用語", related: "関連: estimated that there are at least 500" },
+    { english: "expand", japanese: "拡大する、拡げる、発展させる", category: "10. 一般用語", related: "関連: expanded to include" },
+    { english: "extend", japanese: "拡張する、拡大する", category: "10. 一般用語", related: "関連: extended Freud's original concept" },
+    { english: "impress", japanese: "感銘を与える、印象を与える", category: "10. 一般用語", related: "関連: impressed with the fact" },
+    { english: "inclination", japanese: "傾向、意向、好み、傾き", category: "10. 一般用語", related: "関連: inclination of an object" },
+    { english: "inspire", japanese: "引き起こす、刺激を与える、活気を与える", category: "10. 一般用語", related: "関連: inspired by C. Rogers'" },
+    { english: "interrupt", japanese: "妨害する、中断する", category: "10. 一般用語", related: "関連: interrupted for some reason" },
+    { english: "locate", japanese: "配置する、置く、位置つける", category: "10. 一般用語", related: "関連: located in the same place" },
+    { english: "mediator", japanese: "媒介作物、（仲介物、仲介者）", category: "10. 一般用語", related: "関連: mediators in the client's behavior change" },
+    { english: "optimize", japanese: "最大限に活用する、最適化する", category: "10. 一般用語", related: "関連: optimize their chance of getting a response" },
+    { english: "originate", japanese: "生じる、始まる", category: "10. 一般用語", related: "関連: originated from a concept" },
+    { english: "overwhelm", japanese: "苦しめる、悩ませる、圧倒する", category: "10. 一般用語", related: "関連: feel overwhelmed" },
+    { english: "parallel", japanese: "類似した、平行した", category: "10. 一般用語", related: "関連: parallel changes" },
+    { english: "postulate", japanese: "仮定する、主張する", category: "10. 一般用語", related: "関連: postulate that implicit family rules" },
+    { english: "prepare", japanese: "準備する、覚悟をさせる", category: "10. 一般用語", related: "関連: prepared to absorb a client's anxiety" },
+    { english: "presume", japanese: "仮定する、推定する", category: "10. 一般用語", related: "関連: presume that the maladaptive cognitions" },
+    { english: "property", japanese: "特性、性質、所有物、財産", category: "10. 一般用語", related: "関連: basic property of unconscious functioning" },
+    { english: "rear", japanese: "育てつ、養育する", category: "10. 一般用語", related: "関連: children who were reared" },
+    { english: "render", japanese: "与える、寄与する、変える", category: "10. 一般用語", related: "関連: rendered it inaccessible" },
+    { english: "reproduce", japanese: "再生する、繁殖する", category: "10. 一般用語", related: "関連: reproduce a longer sentence" },
+    { english: "survivor", japanese: "サバイバー、生存者、困難を切り抜けてきた人", category: "10. 一般用語", related: "関連: survivors who got PTSD" },
+    { english: "syndrome", japanese: "症候群", category: "10. 一般用語", related: "関連: empty nest syndrome" },
+    { english: "trigger", japanese: "きっかけとなる、引き起こす", category: "10. 一般用語", related: "関連: triggered by self-disclosure" },
+    { english: "undertake", japanese: "請け負う、引き受ける、始める", category: "10. 一般用語", related: "関連: undertakes to describe and explain" },
+    { english: "unify", japanese: "統合する、統一する", category: "10. 一般用語", related: "関連: unifies many researchers" },
+
+    // ==========================================
+    // 11. 人名
+    // ==========================================
+    { english: "Tinbergen, Nikolaas", japanese: "ニコラス・ティンバーゲン", category: "11. 人名", related: "比較行動学、比較行動学の先駆者、本能的行動、刺激" },
+    { english: "Tolman, Edward", japanese: "エドワード・トールマン", category: "11. 人名", related: "新行動主義、認知地図" },
+    { english: "Watson, John", japanese: "ジョン・ワトソン", category: "11. 人名", related: "行動主義" },
+    { english: "Weber, Ernst", japanese: "エルンスト・ウェーバー", category: "11. 人名", related: "精神物理学、弁別閾、ウェーバーの法則" },
+    { english: "Wechsler, David", japanese: "デビッド・ウェクスラー", category: "11. 人名", related: "ウェクスラー式知能検査" },
+    { english: "Wernicke, Carl", japanese: "カール・ウェルニッケ", category: "11. 人名", related: "ウェルニッケ野、ウェルニッケ失語" },
+    { english: "Wertheimer, Max", japanese: "マックス・ヴェルトハイマー", category: "11. 人名", related: "ゲシュタルト心理学、仮性運動" },
+    { english: "Wing, Lorna", japanese: "ローナ・ウィング", category: "11. 人名", related: "アスペルガー症候群、自閉症スペクトラム、3つの組の症状" },
+    { english: "Winnicott, Donald", japanese: "ドナルド・ウィニコット", category: "11. 人名", related: "ホールディングの環境、移行対象" },
+    { english: "Wolpe, Joseph", japanese: "ジョセフ・ウォルピ", category: "11. 人名", related: "系統的脱鈍作法" },
+    { english: "Wundt, Wilhelm", japanese: "ヴィルヘルム・ヴント", category: "11. 人名", related: "心理学実験室、構成主義" },
+    { english: "Zajonc, Robert", japanese: "ロバート・ザイアンス", category: "11. 人名", related: "単純接触効果、社会的促進" },
+    { english: "Zimbardo, Phillip", japanese: "フィリップ・ジンバルドー", category: "11. 人名", related: "監獄実験、ルシファー効果" },
+    { english: "Rorschach, Hermann", japanese: "ヘルマン・ロールシャッハ", category: "11. 人名", related: "ロールシャッハ・テスト" },
+    { english: "Rosenzweig, Saul", japanese: "ソウル・ローゼンツヴァイク", category: "11. 人名", related: "P-Fスタディ、フラストレーション耐性" },
+    { english: "Schultz, Johannes", japanese: "ヨハネス・シュルツ", category: "11. 人名", related: "自律訓練法" },
+    { english: "Seligman, Martin", japanese: "マーティン・セリグマン", category: "11. 人名", related: "学習性無力感、ポジティブ心理学" },
+    { english: "Selye, Hans", japanese: "ハンス・セリエ", category: "11. 人名", related: "ストレス、汎適応症候群" },
+    { english: "Skinner, Burrhus", japanese: "バラス・スキナー", category: "11. 人名", related: "徹底的行動主義、オペラント条件づけ" },
+    { english: "Spearman, Charles", japanese: "チャールズ・スピアマン", category: "11. 人名", related: "2因子説、一般因子（g因子）、特殊因子（s因子）" },
+    { english: "Spitz, René", japanese: "ルネ・スピッツ", category: "11. 人名", related: "ホスピタリズム、アナクリティックうつ病" },
+    { english: "Stern, Daniel", japanese: "ダニエル・スターン", category: "11. 人名", related: "自己感の発達、情動調律" },
+    { english: "Sullivan, Harry", japanese: "ハリー・サリヴァン", category: "11. 人名", related: "対人関係論" },
+    { english: "Terman, Lewis", japanese: "ルイス・ターマン", category: "11. 人名", related: "スタンフォード・ビネー式知能検査" },
+    { english: "Thorndike, Edward", japanese: "エドワード・ソーンダイク", category: "11. 人名", related: "試行錯誤学習、効果の法則" },
+    { english: "Thurstone, Louis", japanese: "ルイス・サーストン", category: "11. 人名", related: "多因子論" },
+    { english: "Maslow, Abraham", japanese: "アブラハム・マズロー", category: "11. 人名", related: "人間性心理学、欲求の階層説、自己実現" },
+    { english: "Meichenbaum, Donald", japanese: "ドナルド・マイケンバウム", category: "11. 人名", related: "自己教示訓練、ストレス免疫訓練" },
+    { english: "Milgram, Stanley", japanese: "スタンレー・ミルグラム", category: "11. 人名", related: "服従実験、アイヒマン実験" },
+    { english: "Minuchin, Salvador", japanese: "サルバドール・ミニューチン", category: "11. 人名", related: "構造派家族療法" },
+    { english: "Moreno, Jacob", japanese: "ヤコブ・モレノ", category: "11. 人名", related: "心理劇（サイコドラマ）、ソシオメトリー" },
+    { english: "Murray, Henry", japanese: "ヘンリー・マレー", category: "11. 人名", related: "TAT（主題統覚検査）、欲求-圧力分析" },
+    { english: "Pavlov, Ivan", japanese: "イワン・パブロフ", category: "11. 人名", related: "古典的条件づけ、条件反射" },
+    { english: "Perls, Frederick", japanese: "フレデリック・パールズ", category: "11. 人名", related: "ゲシュタルト療法、今、ここ" },
+    { english: "Piaget, Jean", japanese: "ジャン・ピアジェ", category: "11. 人名", related: "知能の発達段階、シェマ、同化と調節" },
+    { english: "Pinker, Steven", japanese: "スティーブン・ピンカー", category: "11. 人名", related: "言語生得説、進化心理学" },
+    { english: "Premack, David", japanese: "デビッド・プレマック", category: "11. 人名", related: "プレマックの原理、心の理論" },
+    { english: "Rank, Otto", japanese: "オットー・ランク", category: "11. 人名", related: "出生傷創説" },
+    { english: "Rogers, Carl", japanese: "カール・ロジャーズ", category: "11. 人名", related: "来談者中心療法、無条件の肯定的関心、自己一致、共感的理解" },
+    { english: "Klein, Melanie", japanese: "メラニー・クライン", category: "11. 人名", related: "対象関係論、妄想-分裂ポジション、抑うつポジション" },
+    { english: "Koch, Karl", japanese: "カール・コッホ", category: "11. 人名", related: "バウムテスト" },
+    { english: "Kohlberg, Lawrence", japanese: "ローレンス・コールバーグ", category: "11. 人名", related: "道徳性の発達段階説" },
+    { english: "Köhler, Wolfgang", japanese: "ヴォルフガング・ケーラー", category: "11. 人名", related: "ゲシュタルト心理学、洞察学習" },
+    { english: "Kohut, Heinz", japanese: "ハインツ・コフート", category: "11. 人名", related: "自己心理学" },
+    { english: "Kretschmer, Ernst", japanese: "エルンスト・クレッチマー", category: "11. 人名", related: "性格類型論、体型" },
+    { english: "Lazarus, Richard", japanese: "リチャード・ラザルス", category: "11. 人名", related: "認知的な評価、ストレスコーピング" },
+    { english: "Lewin, Kurt", japanese: "クルト・レヴィン", category: "11. 人名", related: "場の理論、グループダイナミクス" },
+    { english: "Liberman, Robert", japanese: "ロバート・リバーマン", category: "11. 人名", related: "ソーシャルスキル・トレーニング（SST）" },
+    { english: "Loftus, Elizabeth", japanese: "エリザベス・ロフタス", category: "11. 人名", related: "虚偽記憶、目撃証言の信頼性" },
+    { english: "Lorentz, Konrad", japanese: "コンラート・ローレンツ", category: "11. 人名", related: "刻印づけ（刷り込み）" },
+    { english: "Mahler, Margaret", japanese: "マーガレット・マーラー", category: "11. 人名", related: "分離-個体化過程" },
+    { english: "Marcia, James", japanese: "ジェームズ・マーシャ", category: "11. 人名", related: "アイデンティティステイタス" },
+    { english: "Freud, Sigmund", japanese: "ジークムント・フロイト", category: "11. 人名", related: "精神分析学、無意識" },
+    { english: "Fromm, Erich", japanese: "エーリッヒ・フロム", category: "11. 人名", related: "新フロイト派、権威主義的パーソナリティ" },
+    { english: "Gendlin, Eugene", japanese: "ユージン・ジェンドリン", category: "11. 人名", related: "フォーカシング" },
+    { english: "Gibson, James", japanese: "ジェームズ・ギブソン", category: "11. 人名", related: "アフォーダンス" },
+    { english: "Haley, Jay", japanese: "ジェイ・ヘイリー", category: "11. 人名", related: "戦略的家族療法" },
+    { english: "Heider, Fritz", japanese: "フリッツ・ハイダー", category: "11. 人名", related: "バランス理論、帰属理論" },
+    { english: "Horney, Karen", japanese: "カレン・ホーナイ", category: "11. 人名", related: "新フロイト派、基本不安" },
+    { english: "Hull, Clark", japanese: "クラーク・ハル", category: "11. 人名", related: "新行動主義、動機低減説" },
+    { english: "James, William", japanese: "ウィリアム・ジェームズ", category: "11. 人名", related: "機能主義、ジェームズ・ランゲ説" },
+    { english: "Jung, Carl", japanese: "カール・ユング", category: "11. 人名", related: "分析心理学、集合的無意識" },
+    { english: "Kalff, Dora", japanese: "ドラ・カルフ", category: "11. 人名", related: "箱庭療法" },
+    { english: "Kanner, Leo", japanese: "レオ・カナー", category: "11. 人名", related: "早期幼児自閉症" },
+    { english: "Kernberg, Otto", japanese: "オットー・カーンバーグ", category: "11. 人名", related: "境界人格構造" },
+    { english: "Broca, Pierre", japanese: "ピエール・ブローカ", category: "11. 人名", related: "ブローカ野、言語野の損傷" },
+    { english: "Cannon, Walter", japanese: "ウォルター・キャノン", category: "11. 人名", related: "キャノン・バード説、ホメオスタシス" },
+    { english: "Cattell, Raymond", japanese: "レイモンド・キャッテル", category: "11. 人名", related: "流動性知能と結晶性知能、16PF" },
+    { english: "Chomsky, Noam", japanese: "ノーム・チョムスキー", category: "11. 人名", related: "生成文法" },
+    { english: "Ebbinghaus, Hermann", japanese: "ヘルマン・エビングハウス", category: "11. 人名", related: "忘却に関する研究、エビングハウス" },
+    { english: "Ekman, Paul", japanese: "ポール・エクマン", category: "11. 人名", related: "感情と表情の研究、微表情" },
+    { english: "Ellis, Albert", japanese: "アルバート・エリス", category: "11. 人名", related: "論理療法、ABC理論" },
+    { english: "Eysenck, Hans", japanese: "ハンス・アイゼンク", category: "11. 人名", related: "行動療法、モースレイ人格目録 (MPI)" },
+    { english: "Erikson, Erik", japanese: "エリク・エリクソン", category: "11. 人名", related: "漸成説、発達段階" },
+    { english: "Fechner, Gustav", japanese: "グスタフ・フェヒナー", category: "11. 人名", related: "精神物理学" },
+    { english: "Festinger, Leon", japanese: "レオン・フェスティンガー", category: "11. 人名", related: "認知的不協和理論" },
+    { english: "Frankl, Viktor", japanese: "ヴィクトール・フランクル", category: "11. 人名", related: "ロゴセラピー、意味への意志" },
+    { english: "Freud, Anna", japanese: "アンナ・フロイト", category: "11. 人名", related: "防衛機構の概念化、精神分析" },
+    { english: "Adler, Alfred", japanese: "アルフレッド・アドラー", category: "11. 人名", related: "個人心理学、劣等感、権力への意志" },
+    { english: "Ainsworth, Mary", japanese: "メアリー・エインズワース", category: "11. 人名", related: "ストレンジ・シチュエーション法、愛着のタイプ" },
+    { english: "Allport, Gordon", japanese: "ゴードン・オールポート", category: "11. 人名", related: "パーソナリティ心理学、共通特性と個人特性" },
+    { english: "Asch, Solomon", japanese: "ソロモン・アッシュ", category: "11. 人名", related: "印象形成、同調行動" },
+    { english: "Asperger, Hans", japanese: "ハンス・アスペルガー", category: "11. 人名", related: "アスペルガー症候群" },
+    { english: "Axline, Virginia", japanese: "バージニア・アクライン", category: "11. 人名", related: "プレイセラピー" },
+    { english: "Bandura, Albert", japanese: "アルバート・バンドゥーラ", category: "11. 人名", related: "社会的学習理論、モデリング、観察学習" },
+    { english: "Bateson, Gregory", japanese: "グレゴリー・ベイトソン", category: "11. 人名", related: "ダブルバインド" },
+    { english: "Beck, Aaron", japanese: "アーロン・ベック", category: "11. 人名", related: "認知療法、認知の歪み" },
+    { english: "Berne, Erick", japanese: "エリック・バーン", category: "11. 人名", related: "交流分析" },
+    { english: "Binet, Alfred", japanese: "アルフレッド・ビネー", category: "11. 人名", related: "ビネー式知能検査" },
+    { english: "Bleuler, Eugen", japanese: "オイゲン・ブロイラー", category: "11. 人名", related: "統合失調症（Schizophrenia）への改名" },
+    { english: "Bowlby, John", japanese: "ジョン・ボウルビィ", category: "11. 人名", related: "愛着理論（アタッチメント理論）" }
+];
+let words =JSON.parse(localStorage.getItem('psych_words'))||defaultWords;
+    let currentPool = [];
+    let currentIndex = 0;
+    let quizMode = "en-jp";
+    let isAnswerShown = false;
+    function initApp() {
+        updateCategorySelect();
+        changeMode();
+    }
+    function updateCategorySelect() {
+        const select = document.getElementById('modeSelect');
+        const newSelect = document.getElementById('newCategory');
+        
+        const categories = [...new Set(words.map(w => w.category))].sort((a, b) => {
+    const numA = parseInt(a);
+    const numB = parseInt(b);
+    return numA - numB;
+});
+       select.innerHTML =
+'<option value="random">🔀 すべてからランダム</option>';
+        categories.forEach(cat => {
+            select.innerHTML += `<option value="${cat}">🌱 ${cat}</option>`;
+        });
+
+        newSelect.innerHTML = '';
+        categories.forEach(cat => {
+            newSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+    }
+    function changeMode() {
+    const mode =
+        document.getElementById('modeSelect').value;
+    if (mode === 'random') {
+        currentPool =
+            [...words].sort(
+                () => Math.random() - 0.5
+            );
+    } else {
+        currentPool =
+            words
+            .filter(
+                w => w.category === mode
+            )
+            .sort(
+                () => Math.random() - 0.5
+            );
+    }
+    currentIndex = 0;
+    showCard();
+}
+    function showCard() {
+         isAnswerShown = false;
+    document.getElementById('answerArea')
+        .classList.remove('show');
+    document.getElementById('revealBtn')
+        .style.display = 'block';
+    document.getElementById('nextBtn')
+        .style.display = 'none';
+    if (currentPool.length === 0) {
+        document.getElementById('cardCategory').innerText =
+            "お知らせ";
+        document.getElementById('cardEnglish').innerText =
+            "該当する単語がありません";
+        document.getElementById('cardJapanese').innerText =
+            "";
+        document.getElementById('cardRelated').innerText =
+            "";
+        return;
+    }
+    if (currentIndex >= currentPool.length) {
+        currentPool.sort(
+            () => Math.random() - 0.5
+        );
+        currentIndex = 0;
+    }
+    const currentWord =
+        currentPool[currentIndex];
+    document.getElementById('cardCategory').innerText =
+        currentWord.category;
+    if (quizMode === "en-jp") {
+        document.getElementById('cardEnglish').innerText =
+            currentWord.english;
+        document.getElementById('cardJapanese').innerText =
+            currentWord.japanese;
+    } else {
+        document.getElementById('cardEnglish').innerText =
+            currentWord.japanese;
+        document.getElementById('cardJapanese').innerText =
+            currentWord.english;
+    }
+    document.getElementById('cardRelated').innerText =
+        currentWord.related;
+}
+            function revealAnswer() {
+        document.getElementById('answerArea')
+        .classList.add('show');
+    document.getElementById('revealBtn')
+        .style.display = 'none';
+    document.getElementById('nextBtn')
+        .style.display = 'block';
+    isAnswerShown = true;
+}
+function toggleMode() {
+    if (quizMode === "en-jp") {
+        quizMode = "jp-en";
+    } else {
+        quizMode = "en-jp";
+    }
+    showCard();
+    }
+function nextCard() {
+    currentIndex++;
+    showCard();
+}
+    function addNewWord() {
+        const eng = document.getElementById('newEnglish').value.trim();
+        const jpn = document.getElementById('newJapanese').value.trim();
+        const cat = document.getElementById('newCategory').value;
+        const rel = document.getElementById('newRelated').value.trim();
+        if (!eng || !jpn) {
+            alert('英単語と日本語訳は必ず入力してください。');
+            return;
+        }
+        const newEntry = {
+            english: eng,
+            japanese: jpn,
+            category: cat,
+            related: rel ? `関連: ${rel}` : "関連用語なし"
+        };
+        words.push(newEntry);
+        localStorage.setItem('psych_words', JSON.stringify(words));
+        document.getElementById('newEnglish').value = '';
+        document.getElementById('newJapanese').value = '';
+        document.getElementById('newRelated').value = '';
+        alert('新しい単語を追加しました！');
+        updateCategorySelect();
+        changeMode();
+    }
+function searchWord() {
+    const keyword =
+        document.getElementById("searchWord")
+        .value
+        .toLowerCase()
+        .trim();
+    const result =
+        words.find(word =>
+            word.english.toLowerCase().includes(keyword)
+            ||
+            word.japanese.includes(keyword)
+        );
+    if (!result) {
+        alert("見つかりません");
+        return;
+    }
+    document.getElementById("cardCategory").innerText =
+        result.category;
+    document.getElementById("cardEnglish").innerText =
+        result.english;
+    document.getElementById("cardJapanese").innerText =
+        result.japanese;
+    document.getElementById("cardRelated").innerText =
+        result.related;
+    document.getElementById("answerArea")
+        .classList.add("show");
+}
+    initApp();
+</script>
+</body>
+</html>
